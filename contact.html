@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Omniversal Systems - Contact</title>
+  <!-- AOS CSS for scroll-triggered animations -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+  <style>
+    /* Base Reset and Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #fff;
+      color: #101010;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+    /* Navigation Bar */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(106, 122, 141, 0.95);
+      padding: 15px 30px;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin: 0 20px;
+      font-size: 1.1em;
+      transition: color 0.3s ease;
+    }
+    nav a:hover {
+      color: #00BFFF;
+    }
+    /* Contact Section Styles */
+    #contact {
+      min-height: 100vh;
+      padding: 100px 20px 60px;
+      background: #d1d7ed;
+      color: #101010;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .contact-container {
+      display: flex;
+      flex-wrap: nowrap;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      align-items: center ;
+      justify-content: stretch;
+    }
+    .contact-image, .contact-form {
+      flex: 1 1 400px;
+      padding: 20px;
+    }
+    .contact-image img {
+      max-width: 150%;
+      border-radius: 10%  5%;
+      box-shadow: 12px 12px 12px rgba(0, 0, 0, 0.893);
+    }
+    .contact-form {
+      background: #f7f7f7;
+      height: 600px;
+      width: 600px;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .contact-form h2 {
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .contact-form p {
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .contact-form form {
+      display: flex;
+      flex-direction: column;
+    }
+    .contact-form label {
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    .contact-form input,
+    .contact-form textarea {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    .contact-form textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .cta-button {
+      display: inline-block;
+      background-color: #00BFFF;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: bold;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      margin-top: 20px;
+      border: none;
+      cursor: pointer;
+    }
+    .cta-button:hover {
+      background-color: #009acd;
+      transform: scale(1.05);
+    }
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .contact-container {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="about.html">About Us</a>
+    <a href="solutions.html">Solutions</a>
+    <a href="blog.html">Blog</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+
+  <!-- Contact Section -->
+  <section id="contact" data-aos="fade-up">
+    <div class="contact-container">
+      <!-- Image Section -->
+      <div class="contact-image">
+        <!-- Replace the src attribute value with your generated image URL -->
+        <img  src="contact.webp" alt="Call center agents in professional attire">
+      </div>
+      <!-- Contact Form Section -->
+      <div class="contact-form">
+        <h2>Contact Us</h2>
+        <p>
+          We're here to help. Please fill out the form below and a member of our team will get back to you shortly.
+        </p>
+        <form action="submit_form.php" method="post">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" required>
+
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+
+          <label for="message">Message</label>
+          <textarea id="message" name="message" required></textarea>
+
+          
+            <a href="mailto:contact@omniversalsystems.com">
+              <button type="submit" class="cta-button">Send Message</button>
+            </a>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- AOS Library for scroll animations -->
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init({ duration: 1200 });
+  </script>
+</body>
+</html>
