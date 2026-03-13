@@ -2,276 +2,333 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Omniversal Systems - Blog</title>
-  <!-- AOS CSS for scroll-triggered animations -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Insights — Omniversal Systems</title>
+  <meta name="description" content="Perspectives, analysis, and practical guidance on AI strategy, agentic systems, ML engineering, governance, and more from the Omniversal Systems team.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
   <style>
-    /* Use the same CSS as in home.html */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg-primary: #070B14; --bg-secondary: #0d1422; --bg-card: #111827;
+      --accent: #00D4FF; --accent-hover: #00a8cc; --accent2: #6366f1;
+      --text: #f1f5f9; --text-muted: #94a3b8; --border: rgba(255,255,255,0.08);
+      --radius: 12px; --transition: 0.3s ease;
     }
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    header {
-      margin-bottom: 1px;
-    }
-    /* Main Navbar */
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: black;  
-      padding: 20px;
-    }
-    /* Logo Styling (in main navbar) */
-    .navbar .logo img {
-      height: 40px; /* Adjust as needed */
-      scale: 2;
-      padding-left: 2rem;
-    }
-    .nav-links {
-      list-style: none;
-      display: flex;
-    }
-    .nav-links li a {
-      color: white;
-      text-decoration: none;
-      margin-left: 20px;
-      font-size: 1em;
-    }
-    /* Hamburger Icon (Teal Green) */
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      cursor: pointer;
-    }
-    .hamburger span {
-      height: 3px;
-      width: 25px;
-      background: rgb(243, 247, 247);
-      margin: 4px 0;
-      transition: all 0.3s ease;
-    }
-    /* Mobile Overlay Menu */
-    .nav-overlay {
-      position: fixed;
-      top: 0;
-      left: 100%; /* Offscreen by default */
-      width: 100%;
-      height: 100vh;
-      background: teal;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: left 0.3s ease;
-      z-index: 1000;
-    }
-    .nav-overlay.active {
-      left: 0;
-    }
-    /* Overlay Header: contains clickable logo and close icon */
-    .overlay-header {
-      width: 100%;
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    .overlay-header .logo img {
-      height: 40px;
-      scale: 1.5;
-    }
-    .close-btn {
-      font-size: 2em;
-      color: white;
-      cursor: pointer;
-      user-select: none;
-    }
-    /* Overlay Menu Items */
-    .nav-overlay-menu {
-      list-style: none;
-      text-align: center;
-      margin-top: 80px; /* Adjust to ensure it doesn't overlap the header */
-    }
-    .nav-overlay-menu li {
-      margin: 20px 0;
-    }
-    .nav-overlay-menu li a {
-      color: white;
-      font-size: 1.5em;
-      text-decoration: none;
-    }
-    /* Media Query for Mobile (max-width: 830px) */
-    @media screen and (max-width: 830px) {
-      .nav-links {
-        display: none;
-      }
-      .hamburger {
-        display: flex;
-      }
-    }
-    section {
-      min-height: 100vh;
-      padding: 100px 20px 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .section-content {
-      max-width: 800px;
-      text-align: center;
-      padding: 20px;
-    }
-    h1, h2 {
-      margin-bottom: 20px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-    p { line-height: 1.6; margin-bottom: 20px; }
-    /* Hero Section for Blog Page */
-    .hero {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-      background: linear-gradient(135deg,   #0f0f0f, #e0e0e0);
-    }
-    .hero-content {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      padding: 20vh 10px;
-      color: #101010;
-    }
-    .cta-button {
-      display: inline-block;
-      background-color: #00BFFF;
-      color: #101010;
-      padding: 12px 24px;
-      border-radius: 4px;
-      text-decoration: none;
-      font-size: 18px;
-      font-weight: bold;
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    }
-    .cta-button:hover {
-      background-color: #009acd;
-      transform: scale(1.05);
-    }
-    /* Section Background */
-    #blog { background: #ccd54a; color: #101010; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', Arial, sans-serif; background: var(--bg-primary); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    .navbar { position: fixed; top: 0; left: 0; width: 100%; z-index: 900; display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 3rem; background: rgba(7,11,20,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .navbar .logo img { height: 36px; }
+    .nav-links { list-style: none; display: flex; gap: 2.5rem; align-items: center; }
+    .nav-links li a { color: var(--text-muted); font-size: 0.95rem; font-weight: 500; transition: color var(--transition); }
+    .nav-links li a:hover, .nav-links li a.active { color: var(--accent); }
+    .nav-cta { background: var(--accent) !important; color: #070B14 !important; padding: 0.55rem 1.25rem; border-radius: 6px; font-weight: 700 !important; }
+    .nav-cta:hover { background: var(--accent-hover) !important; transform: scale(1.04); }
+    .hamburger { display: none; flex-direction: column; cursor: pointer; gap: 5px; }
+    .hamburger span { display: block; height: 2.5px; width: 26px; background: var(--text); border-radius: 2px; }
+    .nav-overlay { position: fixed; top: 0; left: 100%; width: 100%; height: 100vh; background: rgba(7,11,20,0.98); backdrop-filter: blur(16px); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: left 0.35s cubic-bezier(0.4,0,0.2,1); z-index: 1000; }
+    .nav-overlay.active { left: 0; }
+    .overlay-header { position: absolute; top: 0; left: 0; width: 100%; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .overlay-header .logo img { height: 32px; }
+    .close-btn { font-size: 1.8rem; color: var(--text); cursor: pointer; line-height: 1; }
+    .nav-overlay-menu { list-style: none; text-align: center; display: flex; flex-direction: column; gap: 2rem; }
+    .nav-overlay-menu li a { color: var(--text); font-size: 1.6rem; font-weight: 600; transition: color var(--transition); }
+    .nav-overlay-menu li a:hover { color: var(--accent); }
+    @media (max-width: 830px) { .nav-links { display: none; } .hamburger { display: flex; } .navbar { padding: 1.25rem 1.5rem; } }
+
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--accent); color: #070B14; padding: 0.85rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 700; transition: background var(--transition), transform var(--transition), box-shadow var(--transition); box-shadow: 0 4px 20px rgba(0,212,255,0.25); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,212,255,0.35); }
+
+    /* ── PAGE HERO ───────────────────────────────────────── */
+    .page-hero { position: relative; min-height: 60vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 9rem 2rem 5rem; overflow: hidden; background: var(--bg-primary); }
+    .page-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.1) 0%, transparent 60%); pointer-events: none; }
+    .page-hero-content { position: relative; z-index: 1; max-width: 720px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.25); color: var(--accent); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5rem; }
+    .page-hero-content h1 { font-size: clamp(2.5rem, 5vw, 3.8rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .page-hero-content p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.75; }
+
+    /* ── SECTION BASE ─────────────────────────────────────── */
+    .section { padding: 5rem 2rem; }
+    .section-inner { max-width: 1200px; margin: 0 auto; }
+    .section-label { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--accent); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+    .section-label::before { content: ''; display: inline-block; width: 24px; height: 2px; background: var(--accent); }
+    .section-title { font-size: clamp(1.8rem, 3.5vw, 2.5rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 1rem; }
+    .section-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 560px; line-height: 1.75; }
+    .section-header { margin-bottom: 3rem; }
+
+    /* ── BLOG GRID ───────────────────────────────────────── */
+    .blog-section { background: var(--bg-secondary); }
+    .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 2rem; }
+    .blog-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition); }
+    .blog-card:hover { border-color: rgba(0,212,255,0.3); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+    .blog-card-header { padding: 2rem 2rem 0; }
+    .blog-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .blog-category { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.25); color: #a5b4fc; padding: 0.2rem 0.7rem; border-radius: 100px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+    .blog-date { font-size: 0.8rem; color: var(--text-muted); }
+    .blog-card h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.4; margin-bottom: 0.75rem; }
+    .blog-card-body { padding: 0 2rem; flex: 1; }
+    .blog-card-body p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.75; margin-bottom: 1.25rem; }
+    .blog-card-footer { padding: 1.25rem 2rem 1.75rem; }
+    .blog-read-more { font-size: 0.88rem; font-weight: 700; color: var(--accent); display: inline-flex; align-items: center; gap: 0.4rem; transition: gap var(--transition); }
+    .blog-read-more:hover { gap: 0.7rem; }
+    .blog-read-more::after { content: '→'; }
+
+    /* ── NEWSLETTER ──────────────────────────────────────── */
+    .newsletter-section { background: var(--bg-primary); }
+    .newsletter-inner { max-width: 600px; margin: 0 auto; text-align: center; }
+    .newsletter-inner h2 { font-size: clamp(1.8rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+    .newsletter-inner p { font-size: 1rem; color: var(--text-muted); margin-bottom: 2rem; }
+    .newsletter-form { display: flex; gap: 0.75rem; }
+    .newsletter-form input { flex: 1; padding: 0.85rem 1.25rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; font-family: inherit; outline: none; transition: border-color var(--transition); }
+    .newsletter-form input::placeholder { color: var(--text-muted); }
+    .newsletter-form input:focus { border-color: var(--accent); }
+    .newsletter-form button { background: var(--accent); color: #070B14; padding: 0.85rem 1.75rem; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700; font-family: inherit; cursor: pointer; transition: background var(--transition), transform var(--transition); white-space: nowrap; }
+    .newsletter-form button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    @media (max-width: 480px) { .newsletter-form { flex-direction: column; } }
+    .newsletter-note { font-size: 0.78rem; color: var(--text-muted); margin-top: 1rem; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .footer { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 4rem 2rem 2rem; }
+    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; padding-bottom: 3rem; }
+    .footer-brand p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; max-width: 280px; margin-top: 1rem; }
+    .footer-col h5 { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+    .footer-col ul li a { font-size: 0.9rem; color: var(--text-muted); transition: color var(--transition); }
+    .footer-col ul li a:hover { color: var(--text); }
+    .footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .footer-bottom p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+    @media (max-width: 768px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-brand { grid-column: 1 / -1; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-   <!-- Navigation Header -->
- <header>
-  <nav class="navbar">
-    <!-- Clickable Logo (Main Navbar) -->
-    <a href="home.html" class="logo">
-      <picture>
-        <source srcset="Color logo - no background.svg" type="image/svg+xml">
-        <img src="Color logo - no background.png" alt="Site Logo">
-      </picture>
-    </a>
-    <ul class="nav-links">
-      <li><a href="about.html">About Us</a></li>
-      <li><a href="solutions.html">Solutions</a></li>
-      <li><a href="blog.html">Blogs</a></li>
-      <li><a href="contact.html">Contact</a></li>
-    </ul>
-    <!-- Hamburger Menu Icon (visible on mobile) -->
-    <div class="hamburger" id="hamburger">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
+
+  <header>
+    <nav class="navbar">
+      <a href="home.html" class="logo">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
+        </picture>
+      </a>
+      <ul class="nav-links">
+        <li><a href="about.html">About</a></li>
+        <li><a href="solutions.html">Solutions</a></li>
+        <li><a href="blog.html" class="active">Insights</a></li>
+        <li><a href="contact.html" class="nav-cta">Get In Touch</a></li>
+      </ul>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
     </nav>
   </header>
 
-  <!-- Mobile Overlay Menu -->
   <div class="nav-overlay" id="navOverlay">
-    <!-- Overlay Header with Logo and Close Icon -->
     <div class="overlay-header">
-      <!-- Same Clickable Logo -->
-      <a href="test.html" class="logo">
-       <picture>
-         <source srcset="Color logo - no background.svg" type="image/svg+xml">
-          <img src="Color logo - no background.png" alt="Site Logo">
+      <a href="home.html" class="logo">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
         </picture>
       </a>
-      <!-- Close (X) Icon -->
       <div class="close-btn" id="closeBtn">&times;</div>
     </div>
-    <!-- Overlay Navigation Links -->
     <ul class="nav-overlay-menu">
-      <li><a href="about.html" class="nav-link">About Us</a></li>
+      <li><a href="about.html" class="nav-link">About</a></li>
       <li><a href="solutions.html" class="nav-link">Solutions</a></li>
-      <li><a href="blog.html" class="nav-link">Blogs</a></li>
+      <li><a href="blog.html" class="nav-link">Insights</a></li>
       <li><a href="contact.html" class="nav-link">Contact</a></li>
     </ul>
   </div>
 
-  <!-- Hero Section for Blog Page -->
-  <section class="hero" id="hero">
-    <div class="hero-content" data-aos="fade-up">
-      <h1>Insights & Innovations</h1>
-      <p>Stay updated with the latest trends in AI and technology.</p>
+  <!-- Hero -->
+  <section class="page-hero">
+    <div class="page-hero-content" data-aos="fade-up">
+      <div class="hero-badge">Insights &amp; Perspectives</div>
+      <h1>Ideas That Move AI Forward</h1>
+      <p>Practical analysis, strategic perspectives, and technical deep-dives from the Omniversal Systems team &mdash; covering AI strategy, agentic systems, MLOps, governance, and beyond.</p>
     </div>
   </section>
 
-  <!-- Main Content Section for Blog Page -->
-  <section id="blog" data-aos="fade-up">
-    <div class="section-content">
-      <h2>Our Blog</h2>
-      <p>
-        Explore articles, case studies, and thought leadership on the transformative impact of AI.
-      </p>
+  <!-- Blog Grid -->
+  <section class="section blog-section">
+    <div class="section-inner">
+      <div class="section-header" data-aos="fade-up">
+        <div class="section-label">Latest Articles</div>
+        <h2 class="section-title">Recent Insights</h2>
+        <p class="section-subtitle">Our team writes about what we are actually working on &mdash; so you get perspectives grounded in practice, not theory.</p>
+      </div>
+      <div class="blog-grid">
+
+        <article class="blog-card" data-aos="fade-up" data-aos-delay="0">
+          <div class="blog-card-header">
+            <div class="blog-meta">
+              <span class="blog-category">Agentic AI</span>
+              <span class="blog-date">March 2025</span>
+            </div>
+            <h3>Beyond Chatbots: Designing Multi-Agent Systems That Actually Work in Production</h3>
+          </div>
+          <div class="blog-card-body">
+            <p>Most agentic AI demos look impressive. Most production agentic deployments struggle with reliability, observability, and failure recovery. Here is what separates the two &mdash; and how to build systems that hold up under real-world load.</p>
+          </div>
+          <div class="blog-card-footer">
+            <span class="blog-read-more">Read Article</span>
+          </div>
+        </article>
+
+        <article class="blog-card" data-aos="fade-up" data-aos-delay="80">
+          <div class="blog-card-header">
+            <div class="blog-meta">
+              <span class="blog-category">AI Strategy</span>
+              <span class="blog-date">February 2025</span>
+            </div>
+            <h3>The AI Readiness Audit: A Framework for Honest Self-Assessment Before You Invest</h3>
+          </div>
+          <div class="blog-card-body">
+            <p>Organizations consistently overestimate their AI readiness and underestimate their data debt. Before committing budget to any AI initiative, ask these ten questions &mdash; and be brutally honest about the answers.</p>
+          </div>
+          <div class="blog-card-footer">
+            <span class="blog-read-more">Read Article</span>
+          </div>
+        </article>
+
+        <article class="blog-card" data-aos="fade-up" data-aos-delay="160">
+          <div class="blog-card-header">
+            <div class="blog-meta">
+              <span class="blog-category">MLOps</span>
+              <span class="blog-date">January 2025</span>
+            </div>
+            <h3>Model Drift Is Not a Monitoring Problem &mdash; It Is an Architecture Problem</h3>
+          </div>
+          <div class="blog-card-body">
+            <p>Teams often treat model drift as something to detect and alert on. But by the time your monitoring fires, the damage is done. The real solution lives in how you design the training, serving, and feedback loop from the start.</p>
+          </div>
+          <div class="blog-card-footer">
+            <span class="blog-read-more">Read Article</span>
+          </div>
+        </article>
+
+        <article class="blog-card" data-aos="fade-up" data-aos-delay="0">
+          <div class="blog-card-header">
+            <div class="blog-meta">
+              <span class="blog-category">AI Integration</span>
+              <span class="blog-date">December 2024</span>
+            </div>
+            <h3>Embedding AI into Existing Products Without Burning Down the Architecture</h3>
+          </div>
+          <div class="blog-card-body">
+            <p>Adding AI to a mature software product is not a greenfield problem. Here is the integration playbook we follow to embed LLM-powered features, recommendation layers, and predictive APIs without disrupting what already works.</p>
+          </div>
+          <div class="blog-card-footer">
+            <span class="blog-read-more">Read Article</span>
+          </div>
+        </article>
+
+        <article class="blog-card" data-aos="fade-up" data-aos-delay="80">
+          <div class="blog-card-header">
+            <div class="blog-meta">
+              <span class="blog-category">AI Governance</span>
+              <span class="blog-date">November 2024</span>
+            </div>
+            <h3>The EU AI Act in Plain Language: What Every Product Team Needs to Know Now</h3>
+          </div>
+          <div class="blog-card-body">
+            <p>Regulatory compliance is no longer a legal team problem &mdash; it is a product architecture decision made at the design stage. We break down the EU AI Act's key requirements and what they actually mean for how you build and document AI systems.</p>
+          </div>
+          <div class="blog-card-footer">
+            <span class="blog-read-more">Read Article</span>
+          </div>
+        </article>
+
+        <article class="blog-card" data-aos="fade-up" data-aos-delay="160">
+          <div class="blog-card-header">
+            <div class="blog-meta">
+              <span class="blog-category">AI Strategy</span>
+              <span class="blog-date">October 2024</span>
+            </div>
+            <h3>Why Most AI Pilots Fail to Scale &mdash; And What the Survivors Did Differently</h3>
+          </div>
+          <div class="blog-card-body">
+            <p>Over 80% of AI pilots never make it to production at scale. After working through dozens of these projects, we have identified the patterns that predict success &mdash; and they have almost nothing to do with the model itself.</p>
+          </div>
+          <div class="blog-card-footer">
+            <span class="blog-read-more">Read Article</span>
+          </div>
+        </article>
+
+      </div>
     </div>
   </section>
 
-  <!-- AOS Library for scroll animations -->
+  <!-- Newsletter -->
+  <section class="section newsletter-section" data-aos="fade-up">
+    <div class="section-inner">
+      <div class="newsletter-inner">
+        <div class="section-label" style="justify-content:center;">Stay Informed</div>
+        <h2>Get Insights Delivered</h2>
+        <p>Join practitioners from leading organizations who receive our analysis on AI strategy, engineering, and governance &mdash; no noise, no hype.</p>
+        <form class="newsletter-form" onsubmit="return false;">
+          <input type="email" placeholder="your@email.com" aria-label="Email address">
+          <button type="submit">Subscribe</button>
+        </form>
+        <p class="newsletter-note">No spam. Unsubscribe anytime. We publish roughly twice a month.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems" style="height:32px;">
+        </picture>
+        <p>Intelligent AI systems for forward-thinking organizations. We bridge research and reality.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="blog.html">Insights</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Solutions</h5>
+        <ul>
+          <li><a href="solutions.html">Agentic AI</a></li>
+          <li><a href="solutions.html">AI Strategy</a></li>
+          <li><a href="solutions.html">ML Engineering</a></li>
+          <li><a href="solutions.html">AI Integration</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:contact@omniversalsystems.com">contact@omniversalsystems.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Omniversal Systems. All rights reserved.</p>
+      <p style="color: var(--accent); font-weight:500;">Omnibenevolence in Practice.</p>
+    </div>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>AOS.init({ duration: 900, once: true });</script>
   <script>
-    AOS.init({ duration: 1200 });
+    const hamburger = document.getElementById('hamburger');
+    const navOverlay = document.getElementById('navOverlay');
+    const closeBtn = document.getElementById('closeBtn');
+    hamburger.addEventListener('click', () => navOverlay.classList.add('active'));
+    closeBtn.addEventListener('click', () => navOverlay.classList.remove('active'));
+    document.querySelectorAll('.nav-overlay-menu .nav-link').forEach(link => {
+      link.addEventListener('click', () => navOverlay.classList.remove('active'));
+    });
   </script>
-
-    <!-- JavaScript to Toggle Mobile Menu -->
-    <script>
-      const hamburger = document.getElementById('hamburger');
-      const navOverlay = document.getElementById('navOverlay');
-      const closeBtn = document.getElementById('closeBtn');
-  
-      // Open overlay when hamburger is clicked
-      hamburger.addEventListener('click', function() {
-        navOverlay.classList.add('active');
-      });
-  
-      // Close overlay when X icon is clicked
-      closeBtn.addEventListener('click', function() {
-        navOverlay.classList.remove('active');
-      });
-  
-      // Optional: Close overlay when any menu link is clicked
-      document.querySelectorAll('.nav-overlay-menu .nav-link').forEach(link => {
-        link.addEventListener('click', function() {
-          navOverlay.classList.remove('active');
-        });
-      });
-    </script>
 </body>
 </html>
