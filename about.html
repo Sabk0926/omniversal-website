@@ -2,343 +2,353 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Omniversal Systems - About Us</title>
-  <!-- AOS CSS for scroll-triggered animations -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us — Omniversal Systems</title>
+  <meta name="description" content="Learn about Omniversal Systems — our story, philosophy of Omnibenevolence, values, and the clients we serve.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
   <style>
-    /* Base Reset and Styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg-primary: #070B14; --bg-secondary: #0d1422; --bg-card: #111827;
+      --accent: #00D4FF; --accent-hover: #00a8cc; --accent2: #6366f1;
+      --text: #f1f5f9; --text-muted: #94a3b8; --border: rgba(255,255,255,0.08);
+      --radius: 12px; --transition: 0.3s ease;
     }
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    header {
-      margin-bottom: 1px;
-    }
-    /* Main Navbar */
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: black;  
-      padding: 20px;
-    }
-    /* Logo Styling (in main navbar) */
-    .navbar .logo img {
-      height: 40px; /* Adjust as needed */
-      scale: 2;
-      padding-left: 2rem;
-    }
-    .nav-links {
-      list-style: none;
-      display: flex;
-    }
-    .nav-links li a {
-      color: white;
-      text-decoration: none;
-      margin-left: 20px;
-      font-size: 1em;
-    }
-    /* Hamburger Icon (Teal Green) */
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      cursor: pointer;
-    }
-    .hamburger span {
-      height: 3px;
-      width: 25px;
-      background: rgb(243, 247, 247);
-      margin: 4px 0;
-      transition: all 0.3s ease;
-    }
-    /* Mobile Overlay Menu */
-    .nav-overlay {
-      position: fixed;
-      top: 0;
-      left: 100%; /* Offscreen by default */
-      width: 100%;
-      height: 100vh;
-      background: teal;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: left 0.3s ease;
-      z-index: 1000;
-    }
-    .nav-overlay.active {
-      left: 0;
-    }
-    /* Overlay Header: contains clickable logo and close icon */
-    .overlay-header {
-      width: 100%;
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    .overlay-header .logo img {
-      height: 40px;
-      scale: 1.5;
-    }
-    .close-btn {
-      font-size: 2em;
-      color: white;
-      cursor: pointer;
-      user-select: none;
-    }
-    /* Overlay Menu Items */
-    .nav-overlay-menu {
-      list-style: none;
-      text-align: center;
-      margin-top: 80px; /* Adjust to ensure it doesn't overlap the header */
-    }
-    .nav-overlay-menu li {
-      margin: 20px 0;
-    }
-    .nav-overlay-menu li a {
-      color: white;
-      font-size: 1.5em;
-      text-decoration: none;
-    }
-    /* Media Query for Mobile (max-width: 830px) */
-    @media screen and (max-width: 830px) {
-      .nav-links {
-        display: none;
-      }
-      .hamburger {
-        display: flex;
-      }
-    }
-    /* Section Styles */
-    section {
-      min-height: 100vh;
-      padding: 100px 20px 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .section-content {
-      max-width: 800px;
-      text-align: center;
-      padding: 20px;
-      color:#fff
-    }
-    h1, h2 {
-      margin-bottom: 20px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-    p {
-      line-height: 1.6;
-      margin-bottom: 20px;
-    }
-    /* Hero Section with Video Background */
-    .hero {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-      /* Optional: overlay for text readability */
-      background: rgba(0, 0, 0, 0.3);
-    }
-    #hero-video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 1;
-      opacity: 0.7;
-    }
-    .hero-content {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      padding: 20vh 10px;
-      color: #fff;
-    }
-    .cta-button {
-      display: inline-block;
-      background-color: #00BFFF;
-      color: #101010;
-      padding: 12px 24px;
-      border-radius: 4px;
-      text-decoration: none;
-      font-size: 18px;
-      font-weight: bold;
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    }
-    .cta-button:hover {
-      background-color: #009acd;
-      transform: scale(1.05);
-    }
-    /* Custom Backgrounds for Each Section */
-    #our-story { background: linear-gradient(135deg, #448ecf, #e0e0e0); }
-    #omnibenevolence { background: linear-gradient(270deg, rgb(144, 144, 86), #787878) ; }
-    #our-values { background: linear-gradient(135deg, #448ecf, #e0e0e0); }
-    #our-people { background: linear-gradient(270deg, rgb(144, 144, 86), #787878); }
-    #people-we-serve { background: linear-gradient(135deg, #448ecf, #e0e0e0); }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', Arial, sans-serif; background: var(--bg-primary); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    .navbar { position: fixed; top: 0; left: 0; width: 100%; z-index: 900; display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 3rem; background: rgba(7,11,20,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .navbar .logo img { height: 100px; }
+    .nav-links { list-style: none; display: flex; gap: 2.5rem; align-items: center; }
+    .nav-links li a { color: var(--text-muted); font-size: 0.95rem; font-weight: 500; transition: color var(--transition); }
+    .nav-links li a:hover, .nav-links li a.active { color: var(--accent); }
+    .nav-cta { background: var(--accent) !important; color: #070B14 !important; padding: 0.55rem 1.25rem; border-radius: 6px; font-weight: 700 !important; }
+    .nav-cta:hover { background: var(--accent-hover) !important; transform: scale(1.04); }
+    .hamburger { display: none; flex-direction: column; cursor: pointer; gap: 5px; }
+    .hamburger span { display: block; height: 2.5px; width: 26px; background: var(--text); border-radius: 2px; }
+    .nav-overlay { position: fixed; top: 0; left: 100%; width: 100%; height: 100vh; background: rgba(7,11,20,0.98); backdrop-filter: blur(16px); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: left 0.35s cubic-bezier(0.4,0,0.2,1); z-index: 1000; }
+    .nav-overlay.active { left: 0; }
+    .overlay-header { position: absolute; top: 0; left: 0; width: 100%; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .overlay-header .logo img { height: 32px; }
+    .close-btn { font-size: 1.8rem; color: var(--text); cursor: pointer; line-height: 1; }
+    .nav-overlay-menu { list-style: none; text-align: center; display: flex; flex-direction: column; gap: 2rem; }
+    .nav-overlay-menu li a { color: var(--text); font-size: 1.6rem; font-weight: 600; transition: color var(--transition); }
+    .nav-overlay-menu li a:hover { color: var(--accent); }
+    @media (max-width: 830px) { .nav-links { display: none; } .hamburger { display: flex; } .navbar { padding: 1.25rem 1.5rem; } }
+
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--accent); color: #070B14; padding: 0.85rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 700; transition: background var(--transition), transform var(--transition), box-shadow var(--transition); box-shadow: 0 4px 20px rgba(0,212,255,0.25); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,212,255,0.35); }
+
+    /* ── PAGE HERO ───────────────────────────────────────── */
+    .page-hero { position: relative; width: 100%; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; text-align: center; background: #070B14; }
+    #hero-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; opacity: 0.3; }
+    .page-hero::before { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(to bottom, rgba(7,11,20,0.5) 0%, rgba(7,11,20,0.2) 40%, rgba(7,11,20,0.92) 100%); }
+    .page-hero-content { position: relative; z-index: 3; max-width: 780px; padding: 8rem 1.5rem 4rem; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.25); color: var(--accent); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5rem; }
+    .page-hero-content h1 { font-size: clamp(2.5rem, 5.5vw, 4rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .page-hero-content p { font-size: 1.15rem; color: var(--text-muted); line-height: 1.75; max-width: 580px; margin: 0 auto 2.5rem; }
+
+    /* ── SECTION BASE ─────────────────────────────────────── */
+    .section { padding: 6rem 2rem; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+    .section-label { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--accent); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+    .section-label::before { content: ''; display: inline-block; width: 24px; height: 2px; background: var(--accent); }
+    .section-title { font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 1rem; }
+    .section-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 600px; line-height: 1.75; }
+    .section-header { margin-bottom: 3.5rem; }
+    .section-header.centered { text-align: center; }
+    .section-header.centered .section-subtitle { margin: 0 auto; }
+    .section-header.centered .section-label { justify-content: center; }
+
+    /* ── STATS BAR ─────────────────────────────────────────── */
+    .stats-bar { background: var(--bg-secondary); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 3rem 2rem; }
+    .stats-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center; }
+    .stat-item h3 { font-size: 2.8rem; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    .stat-item p { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin: 0; }
+
+    /* ── STORY ───────────────────────────────────────────── */
+    .story-section { background: var(--bg-secondary); }
+    .story-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 5rem; align-items: start; }
+    .story-aside { padding-top: 0.5rem; }
+    .story-aside .big-quote { font-size: 4rem; color: var(--accent); line-height: 1; margin-bottom: 1rem; }
+    .story-aside blockquote { font-size: 1.15rem; font-style: italic; color: var(--text-muted); line-height: 1.7; border-left: 3px solid var(--accent); padding-left: 1.25rem; }
+    .story-body p { color: var(--text-muted); line-height: 1.85; margin-bottom: 1.5rem; font-size: 1rem; }
+    @media (max-width: 768px) { .story-grid { grid-template-columns: 1fr; gap: 2.5rem; } }
+
+    /* ── PHILOSOPHY ──────────────────────────────────────── */
+    .philosophy-section { background: var(--bg-primary); }
+    .philosophy-inner { max-width: 800px; margin: 0 auto; text-align: center; }
+    .philosophy-word { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+    .philosophy-phonetic { font-size: 1rem; color: var(--text-muted); letter-spacing: 0.08em; margin-bottom: 2rem; font-style: italic; }
+    .philosophy-inner p { font-size: 1.05rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 1.25rem; }
+
+    /* ── VALUES ──────────────────────────────────────────── */
+    .values-section { background: var(--bg-secondary); }
+    .values-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .value-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; transition: border-color var(--transition), transform var(--transition); }
+    .value-card:hover { border-color: rgba(0,212,255,0.3); transform: translateY(-3px); }
+    .value-icon { width: 44px; height: 44px; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; color: var(--accent); }
+    .value-card h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
+    .value-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; margin: 0; }
+
+    /* ── WHO WE SERVE ────────────────────────────────────── */
+    .serve-section { background: var(--bg-primary); }
+    .serve-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+    .serve-card { padding: 1.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); }
+    .serve-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .serve-card p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.65; margin: 0; }
+    .serve-card .serve-icon { width: 44px; height: 44px; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; color: var(--accent); }
+
+    /* ── CTA BAND ────────────────────────────────────────── */
+    .cta-band { background: linear-gradient(135deg, rgba(0,212,255,0.07), rgba(99,102,241,0.07)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 5rem 2rem; text-align: center; }
+    .cta-band h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .cta-band p { color: var(--text-muted); font-size: 1.05rem; max-width: 520px; margin: 0 auto 2.5rem; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .footer { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 4rem 2rem 2rem; }
+    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; padding-bottom: 3rem; }
+    .footer-brand p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; max-width: 280px; margin-top: 1rem; }
+    .footer-col h5 { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+    .footer-col ul li a { font-size: 0.9rem; color: var(--text-muted); transition: color var(--transition); }
+    .footer-col ul li a:hover { color: var(--text); }
+    .footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .footer-bottom p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+    @media (max-width: 768px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-brand { grid-column: 1 / -1; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
- <!-- Navigation Header -->
- <header>
-  <nav class="navbar">
-    <!-- Clickable Logo (Main Navbar) -->
-    <a href="home.html" class="logo">
-      <picture>
-        <source srcset="Color logo - no background.svg" type="image/svg+xml">
-        <img src="Color logo - no background.png" alt="Site Logo">
-      </picture>
-    </a>
-    <ul class="nav-links">
-      <li><a href="about.html">About Us</a></li>
-      <li><a href="solutions.html">Solutions</a></li>
-      <li><a href="blog.html">Blogs</a></li>
-      <li><a href="contact.html">Contact</a></li>
-    </ul>
-    <!-- Hamburger Menu Icon (visible on mobile) -->
-    <div class="hamburger" id="hamburger">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
+
+  <header>
+    <nav class="navbar">
+      <a href="home.html" class="logo">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
+        </picture>
+      </a>
+      <ul class="nav-links">
+        <li><a href="about.html" class="active">About</a></li>
+        <li><a href="solutions.html">Solutions</a></li>
+        <li><a href="blog.html">Insights</a></li>
+        <li><a href="contact.html" class="nav-cta">Get In Touch</a></li>
+      </ul>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
     </nav>
   </header>
 
-  <!-- Mobile Overlay Menu -->
   <div class="nav-overlay" id="navOverlay">
-    <!-- Overlay Header with Logo and Close Icon -->
     <div class="overlay-header">
-      <!-- Same Clickable Logo -->
-      <a href="test.html" class="logo">
-       <picture>
-         <source srcset="Color logo - no background.svg" type="image/svg+xml">
-          <img src="Color logo - no background.png" alt="Site Logo">
+      <a href="home.html" class="logo">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
         </picture>
       </a>
-      <!-- Close (X) Icon -->
       <div class="close-btn" id="closeBtn">&times;</div>
     </div>
-    <!-- Overlay Navigation Links -->
     <ul class="nav-overlay-menu">
-      <li><a href="about.html" class="nav-link">About Us</a></li>
+      <li><a href="about.html" class="nav-link">About</a></li>
       <li><a href="solutions.html" class="nav-link">Solutions</a></li>
-      <li><a href="blog.html" class="nav-link">Blogs</a></li>
+      <li><a href="blog.html" class="nav-link">Insights</a></li>
       <li><a href="contact.html" class="nav-link">Contact</a></li>
     </ul>
   </div>
 
-  
-  <!-- Hero Section with Video Background -->
-  <section id="hero" class="hero">
+  <!-- Hero -->
+  <section class="page-hero">
     <video id="hero-video" autoplay muted loop playsinline>
-      <!-- Replace 'aboutus-heromovie.mp4' with the actual URL or path to your video -->
       <source src="aboutus-heromovie.mp4" type="video/mp4">
-      Your browser does not support the video tag.
     </video>
-    <div class="hero-content" data-aos="fade-up">
-      <h1></h1>
-      <p>Our team of experts turns ideas into tangible outcomes for you.</p>
-      <a href="#our-story" class="cta-button" data-aos="zoom-in">Discover Our Story</a>
+    <div class="page-hero-content" data-aos="fade-up">
+      <div class="hero-badge">About Us</div>
+      <h1>Our Team Turns Ideas into Tangible Outcomes</h1>
+      <p>We are builders, strategists, and scientists united by a single purpose: making AI genuinely useful for people and the organizations they work in.</p>
+      <a href="#our-story" class="btn-primary">Discover Our Story &darr;</a>
     </div>
   </section>
-  
-  <!-- Our Story Section -->
-  <section id="our-story" data-aos="fade-up">
-    <div class="section-content">
-      <h2>Our Story</h2>
-      <p>
-        Founded on the principle of hands-on innovation, Omniversal Systems began as a small team of builders determined to deliver real, impactful solutions. Over the years, our commitment to excellence has driven us to transform industries and empower businesses.
-      </p>
-    </div>
-  </section>
-  
-  <!-- Om·ni·be·nev·o·lence Section -->
-  <section id="omnibenevolence" data-aos="fade-up">
-    <div class="section-content">
-      <h2>Om·ni·be·nev·o·lence</h2>
-      <p>
-        Om·ni·be·nev·o·lence embodies our comprehensive approach to technology and service. We integrate every facet of our expertise to ensure that every solution we deliver is effective, benevolent, and sustainable.
-      </p>
-    </div>
-  </section>
-  
-  <!-- Our Values Section -->
-  <section id="our-values" data-aos="fade-up">
-    <div class="section-content">
-      <h2>Our Values</h2>
-      <p>
-        Our values are the foundation of our success. We believe in integrity, innovation, and inclusiveness. Our commitment to transparency, quality, and customer-centricity drives every project we undertake.
-      </p>
-    </div>
-  </section>
-  
-  <!-- Our People Section -->
-  <section id="our-people" data-aos="fade-up">
-    <div class="section-content">
-      <h2>Our People</h2>
-      <p>
-        At the heart of Omniversal Systems are our people – a diverse group of passionate builders, engineers, and visionaries. Their expertise and dedication are the driving force behind our innovative solutions.
-      </p>
-    </div>
-  </section>
-  
-  <!-- People We Serve Section -->
-  <section id="people-we-serve" data-aos="fade-up">
-    <div class="section-content">
-      <h2>People We Serve</h2>
-      <p>
-        We proudly serve a wide range of clients – from startups to Fortune 500 companies. Our solutions are tailored to meet the unique challenges of every industry, ensuring that our impact is both broad and meaningful.
-      </p>
-    </div>
-  </section>
-  
-  <!-- AOS Library for Scroll Animations -->
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <script>
-    AOS.init({ duration: 1200 });
-  </script>
 
-  
-  <!-- JavaScript to Toggle Mobile Menu -->
+  <!-- Our Story -->
+  <section class="section story-section" id="our-story" data-aos="fade-up">
+    <div class="section-inner">
+      <div class="story-grid">
+        <div class="story-aside">
+          <div class="big-quote">&ldquo;</div>
+          <blockquote>We did not build Omniversal Systems to chase technology trends. We built it to solve real problems for real people.</blockquote>
+        </div>
+        <div class="story-body">
+          <div class="section-label">Our Story</div>
+          <h2 class="section-title">Founded on Hands-On Innovation</h2>
+          <p>Omniversal Systems was founded by a team of engineers, researchers, and operators who had grown frustrated with the gap between AI's promise and its practical reality. Too many organizations were investing in AI initiatives that produced impressive demos but zero operational impact &mdash; complex models with no path to production, and strategies without execution teams.</p>
+          <p>We set out to build something different: a company where technical excellence and business pragmatism are inseparable. Every project we take on is measured against one question &mdash; does this create real, lasting value for the people who use it?</p>
+          <p>From our earliest engagements with startups to our partnerships with global enterprises, that founding principle has never changed. We remain a small-team-of-builders culture at heart &mdash; lean, hands-on, and deeply invested in the outcomes of every client we work with.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" data-aos="fade-up">
+    <div class="stats-grid">
+      <div class="stat-item"><h3>50+</h3><p>Successful Projects</p></div>
+      <div class="stat-item"><h3>95%</h3><p>Client Retention Rate</p></div>
+      <div class="stat-item"><h3>12+</h3><p>Industries Served</p></div>
+      <div class="stat-item"><h3>3&times;</h3><p>Average ROI Delivered</p></div>
+    </div>
+  </div>
+
+  <!-- Omnibenevolence -->
+  <section class="section philosophy-section" data-aos="fade-up">
+    <div class="section-inner">
+      <div class="philosophy-inner">
+        <div class="section-label" style="justify-content:center;">Our Philosophy</div>
+        <div class="philosophy-word">Om&middot;ni&middot;be&middot;nev&middot;o&middot;lence</div>
+        <div class="philosophy-phonetic">/ ˌɒmnɪbɪˈnɛvələns /</div>
+        <p>The word is not accidental. <em>Omni</em> &mdash; all-encompassing &mdash; reflects our commitment to whole-system thinking. We do not optimize one layer while ignoring the others. <em>Benevolence</em> is the ethical anchor: every system we build should genuinely benefit the people who interact with it, not just the organization that deploys it.</p>
+        <p>Omnibenevolence is our reminder that capability without care is just a tool waiting to cause harm. We hold ourselves to a higher standard &mdash; designing AI that is effective, explainable, fair, and humane. Not because regulation demands it, but because it is simply the right way to build.</p>
+        <p>It shapes how we engage clients, how we design systems, and how we make decisions when the right path is not obvious. It is the philosophy that turns a technology company into a trusted partner.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values -->
+  <section class="section values-section" data-aos="fade-up">
+    <div class="section-inner">
+      <div class="section-header centered">
+        <div class="section-label">Our Values</div>
+        <h2 class="section-title">What We Stand For</h2>
+        <p class="section-subtitle">These are not posters on a wall. They are the criteria we use to make decisions under pressure.</p>
+      </div>
+      <div class="values-grid">
+        <div class="value-card" data-aos="fade-up" data-aos-delay="0">
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <h4>Integrity</h4>
+          <p>We say what we mean and deliver what we promise. When things go wrong, we own it &mdash; and fix it. No spin, no blame-shifting, no hiding behind complexity.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="60">
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <h4>Innovation</h4>
+          <p>We actively invest in staying at the frontier. Not for novelty's sake, but because our clients deserve solutions that will remain relevant as technology evolves.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="120">
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h4>Inclusiveness</h4>
+          <p>Great AI is built by diverse teams and serves diverse users. We build with broad perspectives in mind and actively work against systems that exclude or disadvantage.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="180">
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <h4>Transparency</h4>
+          <p>Our clients always know what we are building, why we are building it, and how it works. Explainability is not an afterthought &mdash; it is built in from day one.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="240">
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg></div>
+          <h4>Quality</h4>
+          <p>We are not in the business of shipping fast and fixing later. Every deliverable goes through rigorous review because our clients' reputations depend on what we build.</p>
+        </div>
+        <div class="value-card" data-aos="fade-up" data-aos-delay="300">
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+          <h4>Human-Centricity</h4>
+          <p>The end user is always in the room, even when they are not physically present. We design AI around human needs, not the other way around.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who We Serve -->
+  <section class="section serve-section" data-aos="fade-up">
+    <div class="section-inner">
+      <div class="section-header centered">
+        <div class="section-label">Who We Serve</div>
+        <h2 class="section-title">Partners Across the Spectrum</h2>
+        <p class="section-subtitle">We tailor our approach to meet each client where they are &mdash; whether they are pre-product or post-IPO.</p>
+      </div>
+      <div class="serve-grid">
+        <div class="serve-card" data-aos="fade-up" data-aos-delay="0">
+          <div class="serve-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+          <h4>Startups &amp; Scale-Ups</h4>
+          <p>Move fast without technical debt. We help early-stage companies embed AI into their products from day one, building competitive moats that are hard to replicate.</p>
+        </div>
+        <div class="serve-card" data-aos="fade-up" data-aos-delay="80">
+          <div class="serve-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
+          <h4>Mid-Market Companies</h4>
+          <p>Maximize the ROI of your existing technology investments by layering AI capabilities that deliver measurable operational improvements &mdash; without disrupting what works.</p>
+        </div>
+        <div class="serve-card" data-aos="fade-up" data-aos-delay="160">
+          <div class="serve-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+          <h4>Enterprise Organizations</h4>
+          <p>Navigate AI at scale with governance, compliance, and change management built in. We help Fortune 500 organizations deploy AI responsibly across complex, regulated environments.</p>
+        </div>
+        <div class="serve-card" data-aos="fade-up" data-aos-delay="240">
+          <div class="serve-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+          <h4>Public Sector &amp; Non-Profits</h4>
+          <p>Technology in service of society. We partner with mission-driven organizations to deploy AI that expands access, reduces inefficiency, and improves outcomes for the people who need it most.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-band" data-aos="fade-up">
+    <h2>Ready to Partner with Us?</h2>
+    <p>Whether you have a defined project or an open question, we would love to start a conversation about what's possible.</p>
+    <a href="contact.html" class="btn-primary">Get In Touch &rarr;</a>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems" style="height:32px;">
+        </picture>
+        <p>Intelligent AI systems for forward-thinking organizations. We bridge research and reality.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="blog.html">Insights</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Solutions</h5>
+        <ul>
+          <li><a href="solutions.html">Agentic AI</a></li>
+          <li><a href="solutions.html">AI Strategy</a></li>
+          <li><a href="solutions.html">ML Engineering</a></li>
+          <li><a href="solutions.html">AI Integration</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:contact@omniversalsystems.com">contact@omniversalsystems.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Omniversal Systems. All rights reserved.</p>
+      <p style="color: var(--accent); font-weight:500;">Omnibenevolence in Practice.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>AOS.init({ duration: 900, once: true });</script>
   <script>
     const hamburger = document.getElementById('hamburger');
     const navOverlay = document.getElementById('navOverlay');
     const closeBtn = document.getElementById('closeBtn');
-
-    // Open overlay when hamburger is clicked
-    hamburger.addEventListener('click', function() {
-      navOverlay.classList.add('active');
-    });
-
-    // Close overlay when X icon is clicked
-    closeBtn.addEventListener('click', function() {
-      navOverlay.classList.remove('active');
-    });
-
-    // Optional: Close overlay when any menu link is clicked
+    hamburger.addEventListener('click', () => navOverlay.classList.add('active'));
+    closeBtn.addEventListener('click', () => navOverlay.classList.remove('active'));
     document.querySelectorAll('.nav-overlay-menu .nav-link').forEach(link => {
-      link.addEventListener('click', function() {
-        navOverlay.classList.remove('active');
-      });
+      link.addEventListener('click', () => navOverlay.classList.remove('active'));
     });
   </script>
 </body>

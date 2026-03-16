@@ -2,299 +2,389 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Omniversal Systems - Solutions</title>
-  <!-- AOS CSS for scroll-triggered animations -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solutions — Omniversal Systems</title>
+  <meta name="description" content="Explore Omniversal Systems' five core AI practice areas: strategy, agentic automation, ML engineering, product integration, and AI governance.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
   <style>
-     /* Global Reset & Base Styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg-primary: #070B14; --bg-secondary: #0d1422; --bg-card: #111827;
+      --accent: #00D4FF; --accent-hover: #00a8cc; --accent2: #6366f1;
+      --text: #f1f5f9; --text-muted: #94a3b8; --border: rgba(255,255,255,0.08);
+      --radius: 12px; --transition: 0.3s ease;
     }
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', Arial, sans-serif; background: var(--bg-primary); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    .navbar { position: fixed; top: 0; left: 0; width: 100%; z-index: 900; display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 3rem; background: rgba(7,11,20,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .navbar .logo img { height: 100px; }
+    .nav-links { list-style: none; display: flex; gap: 2.5rem; align-items: center; }
+    .nav-links li a { color: var(--text-muted); font-size: 0.95rem; font-weight: 500; letter-spacing: 0.02em; transition: color var(--transition); }
+    .nav-links li a:hover, .nav-links li a.active { color: var(--accent); }
+    .nav-cta { background: var(--accent) !important; color: #070B14 !important; padding: 0.55rem 1.25rem; border-radius: 6px; font-weight: 700 !important; }
+    .nav-cta:hover { background: var(--accent-hover) !important; transform: scale(1.04); }
+    .hamburger { display: none; flex-direction: column; cursor: pointer; gap: 5px; }
+    .hamburger span { display: block; height: 2.5px; width: 26px; background: var(--text); border-radius: 2px; }
+    .nav-overlay { position: fixed; top: 0; left: 100%; width: 100%; height: 100vh; background: rgba(7,11,20,0.98); backdrop-filter: blur(16px); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: left 0.35s cubic-bezier(0.4,0,0.2,1); z-index: 1000; }
+    .nav-overlay.active { left: 0; }
+    .overlay-header { position: absolute; top: 0; left: 0; width: 100%; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .overlay-header .logo img { height: 32px; }
+    .close-btn { font-size: 1.8rem; color: var(--text); cursor: pointer; line-height: 1; }
+    .nav-overlay-menu { list-style: none; text-align: center; display: flex; flex-direction: column; gap: 2rem; }
+    .nav-overlay-menu li a { color: var(--text); font-size: 1.6rem; font-weight: 600; letter-spacing: 0.04em; transition: color var(--transition); }
+    .nav-overlay-menu li a:hover { color: var(--accent); }
+    @media (max-width: 830px) { .nav-links { display: none; } .hamburger { display: flex; } .navbar { padding: 1.25rem 1.5rem; } }
+
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--accent); color: #070B14; padding: 0.85rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 700; transition: background var(--transition), transform var(--transition), box-shadow var(--transition); box-shadow: 0 4px 20px rgba(0,212,255,0.25); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,212,255,0.35); }
+    .btn-outline { display: inline-flex; align-items: center; gap: 0.5rem; background: transparent; color: var(--text); padding: 0.85rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; border: 1.5px solid rgba(255,255,255,0.15); transition: border-color var(--transition), color var(--transition), transform var(--transition); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+    /* ── PAGE HERO ───────────────────────────────────────── */
+    .page-hero { position: relative; width: 100%; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; text-align: center; background: #070B14; }
+    #hero-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; opacity: 0.3; }
+    .page-hero::before { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(to bottom, rgba(7,11,20,0.6) 0%, rgba(7,11,20,0.1) 50%, rgba(7,11,20,0.95) 100%); }
+    .page-hero-content { position: relative; z-index: 3; max-width: 820px; padding: 8rem 1.5rem 4rem; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.25); color: var(--accent); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5rem; }
+    .page-hero-content h1 { font-size: clamp(2.5rem, 5.5vw, 4rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .page-hero-content p { font-size: 1.15rem; color: var(--text-muted); line-height: 1.75; max-width: 620px; margin: 0 auto 2.5rem; }
+
+    /* ── SECTION BASE ─────────────────────────────────────── */
+    .section { padding: 6rem 2rem; }
+    .section-inner { max-width: 1200px; margin: 0 auto; }
+    .section-label { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--accent); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+    .section-label::before { content: ''; display: inline-block; width: 24px; height: 2px; background: var(--accent); }
+    .section-title { font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 1rem; }
+    .section-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 600px; line-height: 1.75; }
+    .section-header { margin-bottom: 3.5rem; }
+    .section-header.centered { text-align: center; }
+    .section-header.centered .section-subtitle { margin: 0 auto; }
+    .section-header.centered .section-label { justify-content: center; }
+
+    /* ── SERVICE CARDS ───────────────────────────────────── */
+    .services-section { background: var(--bg-primary); }
+    .services-list { display: flex; flex-direction: column; gap: 2rem; }
+    .service-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 2.5rem; display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: start;
+      transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
     }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    header {
-      margin-bottom: 1px;
-    }
-    /* Main Navbar */
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: black;  
-      padding: 20px;
-    }
-    /* Logo Styling (in main navbar) */
-    .navbar .logo img {
-      height: 40px; /* Adjust as needed */
-      scale: 2;
-      padding-left: 2rem;
-    }
-    .nav-links {
-      list-style: none;
-      display: flex;
-    }
-    .nav-links li a {
-      color: white;
-      text-decoration: none;
-      margin-left: 20px;
-      font-size: 1em;
-    }
-    /* Hamburger Icon (Teal Green) */
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      cursor: pointer;
-    }
-    .hamburger span {
-      height: 3px;
-      width: 25px;
-      background: rgb(243, 247, 247);
-      margin: 4px 0;
-      transition: all 0.3s ease;
-    }
-    /* Mobile Overlay Menu */
-    .nav-overlay {
-      position: fixed;
-      top: 0;
-      left: 100%; /* Offscreen by default */
-      width: 100%;
-      height: 100vh;
-      background: teal;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: left 0.3s ease;
-      z-index: 1000;
-    }
-    .nav-overlay.active {
-      left: 0;
-    }
-    /* Overlay Header: contains clickable logo and close icon */
-    .overlay-header {
-      width: 100%;
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    .overlay-header .logo img {
-      height: 40px;
-      scale: 1.5;
-    }
-    .close-btn {
-      font-size: 2em;
-      color: white;
-      cursor: pointer;
-      user-select: none;
-    }
-    /* Overlay Menu Items */
-    .nav-overlay-menu {
-      list-style: none;
-      text-align: center;
-      margin-top: 80px; /* Adjust to ensure it doesn't overlap the header */
-    }
-    .nav-overlay-menu li {
-      margin: 20px 0;
-    }
-    .nav-overlay-menu li a {
-      color: white;
-      font-size: 1.5em;
-      text-decoration: none;
-    }
-    /* Media Query for Mobile (max-width: 830px) */
-    @media screen and (max-width: 830px) {
-      .nav-links {
-        display: none;
-      }
-      .hamburger {
-        display: flex;
-      }
-    }
-    /* Section Styles */
-    section {
-      min-height: 100vh;
-      padding: 100px 20px 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .section-content {
-      max-width: 800px;
-      text-align: center;
-      padding: 20px;
-      color:#fff
-    }
-    h1, h2 {
-      margin-bottom: 20px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-size: xxx-large;
-    }
-    p {
-      line-height: 1.6;
-      margin-bottom: 20px;
-    }
-    /* Hero Section with Video Background */
-    .hero {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-      /* Optional: overlay for text readability */
-      background: rgba(0, 0, 0, 0.3);
-    }
-    #hero-video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 1;
-      opacity: 0.7;
-    }
-    .hero-content {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      padding: 20vh 10px;
-      color: #fff;
-    }
-    .cta-button {
-      display: inline-block;
-      background-color: #00BFFF;
-      color: #101010;
-      padding: 12px 24px;
-      border-radius: 4px;
-      text-decoration: none;
-      font-size: 18px;
-      font-weight: bold;
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    }
-    .cta-button:hover {
-      background-color: #009acd;
-      transform: scale(1.05);
-    }
-    /* Custom Backgrounds for Each Section */
-    #solutions { background: linear-gradient(135deg, #448ecf, #e0e0e0); }
+    .service-card:hover { border-color: rgba(0,212,255,0.3); transform: translateX(4px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+    .service-icon-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding-top: 0.25rem; }
+    .service-icon { width: 64px; height: 64px; background: rgba(0,212,255,0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0,212,255,0.15); flex-shrink: 0; color: var(--accent); }
+    .service-num { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.06em; }
+    .service-body h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .service-body > p { font-size: 0.97rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 1.25rem; }
+    .service-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .service-tag { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.2); color: #a5b4fc; padding: 0.25rem 0.75rem; border-radius: 100px; font-size: 0.75rem; font-weight: 600; }
+    @media (max-width: 600px) { .service-card { grid-template-columns: 1fr; } .service-icon-wrap { flex-direction: row; justify-content: flex-start; } }
+
+    /* ── PROCESS ─────────────────────────────────────────── */
+    .process-section { background: var(--bg-secondary); }
+    .process-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; }
+    .process-step { padding: 2rem; background: rgba(0,212,255,0.03); border: 1px solid var(--border); border-radius: var(--radius); }
+    .step-num { font-size: 2.8rem; font-weight: 800; color: rgba(0,212,255,0.18); line-height: 1; margin-bottom: 1rem; letter-spacing: -0.04em; }
+    .process-step h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .process-step p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; margin: 0; }
+
+    /* ── INDUSTRIES ──────────────────────────────────────── */
+    .industries-section { background: var(--bg-primary); }
+    .industries-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; }
+    .industry-chip { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem 1.25rem; text-align: center; font-size: 0.88rem; font-weight: 600; color: var(--text-muted); transition: border-color var(--transition), color var(--transition); }
+    .industry-chip:hover { border-color: rgba(0,212,255,0.3); color: var(--text); }
+
+    /* ── CTA BAND ────────────────────────────────────────── */
+    .cta-band { background: linear-gradient(135deg, rgba(0,212,255,0.07), rgba(99,102,241,0.07)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 5rem 2rem; text-align: center; }
+    .cta-band h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .cta-band p { color: var(--text-muted); font-size: 1.05rem; max-width: 520px; margin: 0 auto 2.5rem; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .footer { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 4rem 2rem 2rem; }
+    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; padding-bottom: 3rem; }
+    .footer-brand p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; max-width: 280px; margin-top: 1rem; }
+    .footer-col h5 { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+    .footer-col ul li a { font-size: 0.9rem; color: var(--text-muted); transition: color var(--transition); }
+    .footer-col ul li a:hover { color: var(--text); }
+    .footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .footer-bottom p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+    @media (max-width: 768px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-brand { grid-column: 1 / -1; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 
-  <!-- Navigation Header -->
   <header>
     <nav class="navbar">
-      <!-- Clickable Logo (Main Navbar) -->
       <a href="home.html" class="logo">
         <picture>
           <source srcset="Color logo - no background.svg" type="image/svg+xml">
-          <img src="Color logo - no background.png" alt="Site Logo">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
         </picture>
       </a>
       <ul class="nav-links">
-        <li><a href="about.html">About Us</a></li>
-        <li><a href="solutions.html">Solutions</a></li>
-        <li><a href="blogs.html">Blogs</a></li>
-        <li><a href="contact.html">Contact</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="solutions.html" class="active">Solutions</a></li>
+        <li><a href="blog.html">Insights</a></li>
+        <li><a href="contact.html" class="nav-cta">Get In Touch</a></li>
       </ul>
-      <!-- Hamburger Menu Icon (visible on mobile) -->
-      <div class="hamburger" id="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
     </nav>
   </header>
-  
-  <!-- Mobile Overlay Menu -->
+
   <div class="nav-overlay" id="navOverlay">
-    <!-- Overlay Header with Logo and Close Icon -->
     <div class="overlay-header">
-      <!-- Same Clickable Logo -->
-      <a href="test.html" class="logo">
+      <a href="home.html" class="logo">
         <picture>
           <source srcset="Color logo - no background.svg" type="image/svg+xml">
-          <img src="Color logo - no background.png" alt="Site Logo">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
         </picture>
       </a>
-      <!-- Close (X) Icon -->
       <div class="close-btn" id="closeBtn">&times;</div>
     </div>
-    <!-- Overlay Navigation Links -->
     <ul class="nav-overlay-menu">
-      <li><a href="about.html" class="nav-link">About Us</a></li>
+      <li><a href="about.html" class="nav-link">About</a></li>
       <li><a href="solutions.html" class="nav-link">Solutions</a></li>
-      <li><a href="blog.html" class="nav-link">Blogs</a></li>
+      <li><a href="blog.html" class="nav-link">Insights</a></li>
       <li><a href="contact.html" class="nav-link">Contact</a></li>
     </ul>
   </div>
-  
-  <!-- Hero Section for Solutions Page -->
-  <section id="hero" class="hero">
+
+  <!-- Page Hero -->
+  <section class="page-hero">
     <video id="hero-video" autoplay muted loop playsinline>
-      <!-- Replace 'aboutus-heromovie.mp4' with the actual URL or path to your video -->
-      <source src="AI-Driven Innovations.mp4"  type="video/mp4">
-      Your browser does not support the video tag.
+      <source src="AI-Driven Innovations.mp4" type="video/mp4">
     </video>
-    <div class="hero-content" data-aos="fade-up">
-      <h1>People-Centric AI-Driven Innovations</h1>
-      <p>
-        Solutions designed to integrate seamlessly with your business and environment.
-      </p>
+    <div class="page-hero-content" data-aos="fade-up">
+      <div class="hero-badge">Our Services</div>
+      <h1>People-Centric AI&ndash;Driven Innovations</h1>
+      <p>Five practice areas designed to take you from AI idea to production reality &mdash; with full transparency, technical rigour, and a relentless focus on business outcomes.</p>
+      <a href="contact.html" class="btn-primary">Discuss Your Project &rarr;</a>
     </div>
   </section>
 
-  <!-- Main Content Section for Solutions Page -->
-  <section id="solutions" data-aos="fade-up">
-    <div class="section-content">
-      <h2>Intelligent Automation</h2>
+  <!-- Services -->
+  <section class="section services-section">
+    <div class="section-inner">
+      <div class="section-header" data-aos="fade-up">
+        <div class="section-label">What We Offer</div>
+        <h2 class="section-title">Five Core Practice Areas</h2>
+        <p class="section-subtitle">Each practice is staffed by specialists and follows a proven delivery model &mdash; from initial discovery through to live production and ongoing support.</p>
+      </div>
 
+      <div class="services-list">
+
+        <div class="service-card" data-aos="fade-up">
+          <div class="service-icon-wrap">
+            <div class="service-icon"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></div>
+            <span class="service-num">01</span>
+          </div>
+          <div class="service-body">
+            <h3>AI Strategy &amp; Consulting</h3>
+            <p>Transformation starts with clarity. We work directly with executive and product teams to audit your current data landscape, map your competitive environment, and define a prioritized AI roadmap with clear ROI targets. Our strategic engagements accelerate decision-making, align stakeholders, and prevent costly mis-investments in technology that doesn't fit your business model. Whether you are just beginning your AI journey or looking to scale existing initiatives, we bring the frameworks and domain expertise to move fast and build right.</p>
+            <div class="service-tags">
+              <span class="service-tag">AI Readiness Audit</span>
+              <span class="service-tag">Use Case Discovery</span>
+              <span class="service-tag">Executive Workshops</span>
+              <span class="service-tag">Roadmapping</span>
+              <span class="service-tag">Build-vs-Buy Analysis</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="service-card" data-aos="fade-up">
+          <div class="service-icon-wrap">
+            <div class="service-icon"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="6" height="6"/><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="9" y1="2" x2="9" y2="9"/><line x1="15" y1="2" x2="15" y2="9"/><line x1="9" y1="15" x2="9" y2="22"/><line x1="15" y1="15" x2="15" y2="22"/><line x1="2" y1="9" x2="9" y2="9"/><line x1="2" y1="15" x2="9" y2="15"/><line x1="15" y1="9" x2="22" y2="9"/><line x1="15" y1="15" x2="22" y2="15"/></svg></div>
+            <span class="service-num">02</span>
+          </div>
+          <div class="service-body">
+            <h3>Agentic AI &amp; Automation</h3>
+            <p>We design and deploy autonomous AI agents capable of executing complex, multi-step workflows without human intervention. Using LLM orchestration, retrieval-augmented generation (RAG), and tool-use frameworks, our agentic systems handle everything from research and data synthesis to customer-facing interactions and back-office operations. The result: dramatically reduced manual overhead, faster cycle times, and the ability to scale operations without proportional headcount growth. Every agentic system we build is observable, auditable, and designed with sensible human-in-the-loop checkpoints.</p>
+            <div class="service-tags">
+              <span class="service-tag">LLM Orchestration</span>
+              <span class="service-tag">Multi-Agent Design</span>
+              <span class="service-tag">RAG Pipelines</span>
+              <span class="service-tag">Workflow Automation</span>
+              <span class="service-tag">Tool-Use &amp; Function Calling</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="service-card" data-aos="fade-up">
+          <div class="service-icon-wrap">
+            <div class="service-icon"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+            <span class="service-num">03</span>
+          </div>
+          <div class="service-body">
+            <h3>ML Engineering &amp; MLOps</h3>
+            <p>We take machine learning from notebook to production. Our ML engineering practice covers the full lifecycle: problem framing, data acquisition, feature engineering, model selection, training, evaluation, and deployment. Critically, we build the operational infrastructure &mdash; automated retraining pipelines, model registries, serving layers, and drift monitoring &mdash; that ensures models stay accurate and reliable long after launch. We apply MLOps best practices so your data science team can iterate fast without sacrificing stability.</p>
+            <div class="service-tags">
+              <span class="service-tag">Model Development</span>
+              <span class="service-tag">Feature Engineering</span>
+              <span class="service-tag">CI/CD for ML</span>
+              <span class="service-tag">Drift Monitoring</span>
+              <span class="service-tag">Model Serving &amp; APIs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="service-card" data-aos="fade-up">
+          <div class="service-icon-wrap">
+            <div class="service-icon"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+            <span class="service-num">04</span>
+          </div>
+          <div class="service-body">
+            <h3>AI Integration into Existing Products</h3>
+            <p>You do not need to replace your software stack to harness AI &mdash; you need to augment it intelligently. We embed AI capabilities directly into your existing applications: LLM-powered copilots, personalized recommendation engines, intelligent search, NLP-driven automation, and predictive analytics layers. Our integrations are designed to be API-first, modular, and minimally disruptive to your existing architecture. Whether you run a SaaS platform, an internal enterprise system, or a consumer app, we make your product measurably smarter.</p>
+            <div class="service-tags">
+              <span class="service-tag">LLM Copilots</span>
+              <span class="service-tag">Recommendation Engines</span>
+              <span class="service-tag">Intelligent Search</span>
+              <span class="service-tag">NLP Layers</span>
+              <span class="service-tag">Predictive APIs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="service-card" data-aos="fade-up">
+          <div class="service-icon-wrap">
+            <div class="service-icon"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <span class="service-num">05</span>
+          </div>
+          <div class="service-body">
+            <h3>AI Governance &amp; Safety</h3>
+            <p>As AI systems grow in scope and influence, accountability must scale with them. We develop governance frameworks that ensure your AI is explainable, auditable, fair, and compliant with evolving regulations (EU AI Act, NIST AI RMF, sector-specific requirements). Our safety reviews, bias assessments, documentation standards, and incident response protocols give leadership the confidence to deploy AI broadly &mdash; and give your customers the trust they need to engage with it. Good governance is not a constraint on AI; it is the foundation for scaling it sustainably.</p>
+            <div class="service-tags">
+              <span class="service-tag">Explainability (XAI)</span>
+              <span class="service-tag">Bias &amp; Fairness Audits</span>
+              <span class="service-tag">Regulatory Compliance</span>
+              <span class="service-tag">Risk Frameworks</span>
+              <span class="service-tag">AI Policy &amp; Documentation</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </section>
 
-  <!-- AOS Library for scroll animations -->
+  <!-- Process -->
+  <section class="section process-section" data-aos="fade-up">
+    <div class="section-inner">
+      <div class="section-header centered">
+        <div class="section-label">How We Work</div>
+        <h2 class="section-title">A Proven Delivery Process</h2>
+        <p class="section-subtitle">Every engagement follows a structured methodology built for speed, transparency, and lasting impact &mdash; regardless of scope.</p>
+      </div>
+      <div class="process-grid">
+        <div class="process-step" data-aos="fade-up" data-aos-delay="0">
+          <div class="step-num">01</div>
+          <h4>Discover &amp; Define</h4>
+          <p>We audit your data, systems, and business goals to identify the highest-value AI opportunities and define clear, measurable success criteria.</p>
+        </div>
+        <div class="process-step" data-aos="fade-up" data-aos-delay="80">
+          <div class="step-num">02</div>
+          <h4>Design &amp; Prototype</h4>
+          <p>Our architects design the solution and build a rapid prototype to validate technical feasibility and stakeholder alignment before full investment.</p>
+        </div>
+        <div class="process-step" data-aos="fade-up" data-aos-delay="160">
+          <div class="step-num">03</div>
+          <h4>Build &amp; Integrate</h4>
+          <p>We engineer production-grade systems, integrate with your existing stack, and conduct rigorous testing to ensure reliability and security at scale.</p>
+        </div>
+        <div class="process-step" data-aos="fade-up" data-aos-delay="240">
+          <div class="step-num">04</div>
+          <h4>Deploy &amp; Optimize</h4>
+          <p>Post-launch, we monitor performance, iterate based on real-world data, and transfer knowledge to your team for long-term ownership and independence.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Industries -->
+  <section class="section industries-section" data-aos="fade-up">
+    <div class="section-inner">
+      <div class="section-header centered">
+        <div class="section-label">Industries</div>
+        <h2 class="section-title">We Operate Across Sectors</h2>
+        <p class="section-subtitle">Our solutions are designed to meet the unique data, compliance, and operational patterns of any industry.</p>
+      </div>
+      <div class="industries-grid">
+        <div class="industry-chip">Financial Services</div>
+        <div class="industry-chip">Healthcare &amp; Life Sciences</div>
+        <div class="industry-chip">Manufacturing</div>
+        <div class="industry-chip">Retail &amp; E-Commerce</div>
+        <div class="industry-chip">Technology &amp; SaaS</div>
+        <div class="industry-chip">Logistics &amp; Supply Chain</div>
+        <div class="industry-chip">Energy &amp; Utilities</div>
+        <div class="industry-chip">Education &amp; Public Sector</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-band" data-aos="fade-up">
+    <h2>Have a Challenge in Mind?</h2>
+    <p>Tell us about your problem. We'll bring the expertise, the methodology, and the drive to solve it &mdash; on time, in scope.</p>
+    <a href="contact.html" class="btn-primary">Book a Discovery Call &rarr;</a>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems" style="height:32px;">
+        </picture>
+        <p>Intelligent AI systems for forward-thinking organizations. We bridge research and reality.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="blog.html">Insights</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Solutions</h5>
+        <ul>
+          <li><a href="solutions.html">Agentic AI</a></li>
+          <li><a href="solutions.html">AI Strategy</a></li>
+          <li><a href="solutions.html">ML Engineering</a></li>
+          <li><a href="solutions.html">AI Integration</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:contact@omniversalsystems.com">contact@omniversalsystems.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Omniversal Systems. All rights reserved.</p>
+      <p style="color: var(--accent); font-weight:500;">Omnibenevolence in Practice.</p>
+    </div>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>AOS.init({ duration: 900, once: true });</script>
   <script>
-    AOS.init({ duration: 1200 });
+    const hamburger = document.getElementById('hamburger');
+    const navOverlay = document.getElementById('navOverlay');
+    const closeBtn = document.getElementById('closeBtn');
+    hamburger.addEventListener('click', () => navOverlay.classList.add('active'));
+    closeBtn.addEventListener('click', () => navOverlay.classList.remove('active'));
+    document.querySelectorAll('.nav-overlay-menu .nav-link').forEach(link => {
+      link.addEventListener('click', () => navOverlay.classList.remove('active'));
+    });
   </script>
-
-    <!-- JavaScript to Toggle Mobile Menu -->
-    <script>
-      const hamburger = document.getElementById('hamburger');
-      const navOverlay = document.getElementById('navOverlay');
-      const closeBtn = document.getElementById('closeBtn');
-  
-      // Open overlay when hamburger is clicked
-      hamburger.addEventListener('click', function() {
-        navOverlay.classList.add('active');
-      });
-  
-      // Close overlay when X icon is clicked
-      closeBtn.addEventListener('click', function() {
-        navOverlay.classList.remove('active');
-      });
-  
-      // Optional: Close overlay when any menu link is clicked
-      document.querySelectorAll('.nav-overlay-menu .nav-link').forEach(link => {
-        link.addEventListener('click', function() {
-          navOverlay.classList.remove('active');
-        });
-      });
-    </script>
 </body>
 </html>

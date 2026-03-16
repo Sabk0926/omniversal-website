@@ -2,327 +2,271 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Omniversal Systems - Contact</title>
-  <!-- AOS CSS for scroll-triggered animations -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Omniversal Systems</title>
+  <meta name="description" content="Get in touch with Omniversal Systems. Tell us about your AI challenge and we'll get back to you within one business day.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
   <style>
-    /* Base Reset and Styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg-primary: #070B14; --bg-secondary: #0d1422; --bg-card: #111827;
+      --accent: #00D4FF; --accent-hover: #00a8cc; --accent2: #6366f1;
+      --text: #f1f5f9; --text-muted: #94a3b8; --border: rgba(255,255,255,0.08);
+      --radius: 12px; --transition: 0.3s ease;
     }
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-    }
-    .container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    header {
-      margin-bottom: 1px;
-    }
-    /* Main Navbar */
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: black;  
-      padding: 20px;
-    }
-    /* Logo Styling (in main navbar) */
-    .navbar .logo img {
-      height: 40px; /* Adjust as needed */
-      transform: scale(1.5);
-      padding-left: 2rem;
-    }
-    .nav-links {
-      list-style: none;
-      display: flex;
-    }
-    .nav-links li a {
-      color: white;
-      text-decoration: none;
-      margin-left: 20px;
-      font-size: 1em;
-    }
-    /* Hamburger Icon (Teal Green) */
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      cursor: pointer;
-    }
-    .hamburger span {
-      height: 3px;
-      width: 25px;
-      background: rgb(243, 247, 247);
-      margin: 4px 0;
-      transition: all 0.3s ease;
-    }
-    /* Mobile Overlay Menu */
-    .nav-overlay {
-      position: fixed;
-      top: 0;
-      left: 100%; /* Offscreen by default */
-      width: 100%;
-      height: 100vh;
-      background: teal;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: left 0.3s ease;
-      z-index: 1000;
-    }
-    .nav-overlay.active {
-      left: 0;
-    }
-    /* Overlay Header: contains clickable logo and close icon */
-    .overlay-header {
-      width: 100%;
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    .overlay-header .logo img {
-      height: 40px;
-      transform: scale(1.5);
-      padding-left: 2rem;
-    }
-    .close-btn {
-      font-size: 2em;
-      color: white;
-      cursor: pointer;
-      user-select: none;
-    }
-    /* Overlay Menu Items */
-    .nav-overlay-menu {
-      list-style: none;
-      text-align: center;
-      margin-top: 80px; /* Adjust to ensure it doesn't overlap the header */
-    }
-    .nav-overlay-menu li {
-      margin: 20px 0;
-    }
-    .nav-overlay-menu li a {
-      color: white;
-      font-size: 1.5em;
-      text-decoration: none;
-    }
-    /* Media Query for Mobile (max-width: 830px) */
-    @media screen and (max-width: 830px) {
-      .nav-links {
-        display: none;
-      }
-      .hamburger {
-        display: flex;
-      }
-    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', Arial, sans-serif; background: var(--bg-primary); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
 
-    /* Contact Section Styles */
-    #contact {
-      min-height: 100vh;
-      padding: 100px 20px 60px;
-      background: #d1d7ed;
-      color: #101010;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+    .navbar { position: fixed; top: 0; left: 0; width: 100%; z-index: 900; display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 3rem; background: rgba(7,11,20,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .navbar .logo img { height: 100px; }
+    .nav-links { list-style: none; display: flex; gap: 2.5rem; align-items: center; }
+    .nav-links li a { color: var(--text-muted); font-size: 0.95rem; font-weight: 500; transition: color var(--transition); }
+    .nav-links li a:hover, .nav-links li a.active { color: var(--accent); }
+    .nav-cta { background: var(--accent) !important; color: #070B14 !important; padding: 0.55rem 1.25rem; border-radius: 6px; font-weight: 700 !important; }
+    .nav-cta:hover { background: var(--accent-hover) !important; transform: scale(1.04); }
+    .hamburger { display: none; flex-direction: column; cursor: pointer; gap: 5px; }
+    .hamburger span { display: block; height: 2.5px; width: 26px; background: var(--text); border-radius: 2px; }
+    .nav-overlay { position: fixed; top: 0; left: 100%; width: 100%; height: 100vh; background: rgba(7,11,20,0.98); backdrop-filter: blur(16px); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: left 0.35s cubic-bezier(0.4,0,0.2,1); z-index: 1000; }
+    .nav-overlay.active { left: 0; }
+    .overlay-header { position: absolute; top: 0; left: 0; width: 100%; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .overlay-header .logo img { height: 32px; }
+    .close-btn { font-size: 1.8rem; color: var(--text); cursor: pointer; line-height: 1; }
+    .nav-overlay-menu { list-style: none; text-align: center; display: flex; flex-direction: column; gap: 2rem; }
+    .nav-overlay-menu li a { color: var(--text); font-size: 1.6rem; font-weight: 600; transition: color var(--transition); }
+    .nav-overlay-menu li a:hover { color: var(--accent); }
+    @media (max-width: 830px) { .nav-links { display: none; } .hamburger { display: flex; } .navbar { padding: 1.25rem 1.5rem; } }
+
+    /* ── CONTACT PAGE LAYOUT ─────────────────────────────── */
+    .contact-page { min-height: 100vh; display: flex; align-items: stretch; padding-top: 80px; }
+    .contact-inner { max-width: 1200px; margin: 0 auto; width: 100%; padding: 4rem 2rem; display: grid; grid-template-columns: 1fr 1.4fr; gap: 5rem; align-items: start; }
+    @media (max-width: 900px) { .contact-inner { grid-template-columns: 1fr; gap: 3rem; } }
+
+    /* ── LEFT COLUMN ─────────────────────────────────────── */
+    .contact-info { padding-top: 0.5rem; }
+    .section-label { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--accent); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+    .section-label::before { content: ''; display: inline-block; width: 24px; height: 2px; background: var(--accent); }
+    .contact-info h1 { font-size: clamp(2.2rem, 4vw, 3rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .contact-info > p { font-size: 1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 2.5rem; max-width: 420px; }
+    .contact-detail { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
+    .contact-detail-icon { width: 42px; height: 42px; background: rgba(0,212,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; border: 1px solid rgba(0,212,255,0.12); }
+    .contact-detail-text h4 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.2rem; }
+    .contact-detail-text a, .contact-detail-text p { font-size: 1rem; color: var(--text); transition: color var(--transition); margin: 0; }
+    .contact-detail-text a:hover { color: var(--accent); }
+    .what-to-expect { margin-top: 3rem; padding: 1.75rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+    .what-to-expect h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+    .expect-list { list-style: none; display: flex; flex-direction: column; gap: 0.85rem; }
+    .expect-list li { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+    .expect-list li::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; margin-top: 0.1rem; }
+
+    /* ── RIGHT COLUMN — FORM ─────────────────────────────── */
+    .contact-form-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; }
+    .contact-form-wrap h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .contact-form-wrap > p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 2rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+    @media (max-width: 580px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.25rem; }
+    .form-group label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.04em; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 0.8rem 1rem; background: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 0.95rem; font-family: inherit;
+      outline: none; transition: border-color var(--transition);
     }
-    .contact-container {
-      display: grid;
-      flex-wrap: nowrap;
-      max-width: 1200px;
-      width: 100%;
-      margin: 0 auto;
-      align-items: center ;
-      justify-content: center;
-    }
-    .contact-image, .contact-form {
-      flex: 1 1 400px;
-      padding: 20px;
-    }
-    .contact-image img {
-      max-width: 100%;
-      box-shadow: 12px 12px 12px rgba(0, 0, 0, 0.893);
-    }
-    .contact-form {
-      max-width: 100%;
-      background: #f7f7f7;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .contact-form h2 {
-      margin-bottom: 20px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-    .contact-form p {
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
-    .contact-form form {
-      display: flex;
-      flex-direction: column;
-    }
-    .contact-form label {
-      margin: 10px 0 5px;
-      font-weight: bold;
-    }
-    .contact-form input,
-    .contact-form textarea {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1em;
-    }
-    .contact-form textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
-    .cta-button {
-      display: inline-block;
-      background-color: #00BFFF;
-      color: #fff;
-      padding: 12px 24px;
-      border-radius: 4px;
-      text-decoration: none;
-      font-size: 18px;
-      font-weight: bold;
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      margin-top: 20px;
-      border: none;
-      cursor: pointer;
-    }
-    .cta-button:hover {
-      background-color: #009acd;
-      transform: scale(1.05);
-    }
-    /* Responsive adjustments */
-    @media (max-width: 830px) {
-      .contact-container {
-        flex-direction: column;
-      }
-    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .form-group input::placeholder, .form-group textarea::placeholder { color: rgba(148,163,184,0.5); }
+    .form-group select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem; }
+    .form-group select option { background: var(--bg-card); }
+    .form-group textarea { resize: vertical; min-height: 130px; }
+    .form-submit { width: 100%; background: var(--accent); color: #070B14; padding: 1rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer; transition: background var(--transition), transform var(--transition), box-shadow var(--transition); box-shadow: 0 4px 20px rgba(0,212,255,0.25); }
+    .form-submit:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,212,255,0.35); }
+    .form-note { font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 1rem; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .footer { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 4rem 2rem 2rem; }
+    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; padding-bottom: 3rem; }
+    .footer-brand p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; max-width: 280px; margin-top: 1rem; }
+    .footer-col h5 { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+    .footer-col ul li a { font-size: 0.9rem; color: var(--text-muted); transition: color var(--transition); }
+    .footer-col ul li a:hover { color: var(--text); }
+    .footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .footer-bottom p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+    @media (max-width: 768px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-brand { grid-column: 1 / -1; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <!-- Navigation Header -->
+
   <header>
     <nav class="navbar">
-      <!-- Clickable Logo (Main Navbar) -->
       <a href="home.html" class="logo">
         <picture>
           <source srcset="Color logo - no background.svg" type="image/svg+xml">
-          <img src="Color logo - no background.png" alt="Site Logo">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
         </picture>
       </a>
       <ul class="nav-links">
-        <li><a href="about.html">About Us</a></li>
+        <li><a href="about.html">About</a></li>
         <li><a href="solutions.html">Solutions</a></li>
-        <li><a href="blog.html">Blogs</a></li>
-        <li><a href="contact.html">Contact</a></li>
+        <li><a href="blog.html">Insights</a></li>
+        <li><a href="contact.html" class="nav-cta active">Get In Touch</a></li>
       </ul>
-      <!-- Hamburger Menu Icon (visible on mobile) -->
-      <div class="hamburger" id="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
     </nav>
   </header>
-  
-  <!-- Mobile Overlay Menu -->
+
   <div class="nav-overlay" id="navOverlay">
-    <!-- Overlay Header with Logo and Close Icon -->
     <div class="overlay-header">
-      <!-- Same Clickable Logo -->
       <a href="home.html" class="logo">
         <picture>
           <source srcset="Color logo - no background.svg" type="image/svg+xml">
-          <img src="Color logo - no background.png" alt="Site Logo">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
         </picture>
       </a>
-      <!-- Close (X) Icon -->
       <div class="close-btn" id="closeBtn">&times;</div>
     </div>
-    <!-- Overlay Navigation Links -->
     <ul class="nav-overlay-menu">
-      <li><a href="about.html" class="nav-link">About Us</a></li>
+      <li><a href="about.html" class="nav-link">About</a></li>
       <li><a href="solutions.html" class="nav-link">Solutions</a></li>
-      <li><a href="blog.html" class="nav-link">Blogs</a></li>
+      <li><a href="blog.html" class="nav-link">Insights</a></li>
       <li><a href="contact.html" class="nav-link">Contact</a></li>
     </ul>
   </div>
 
-  <!-- Contact Section -->
-  <section id="contact" data-aos="fade-up">
-    <div class="contact-container">
-      <!-- Image Section -->
-      <div class="contact-image">
-        <!-- Replace the src attribute value with your generated image URL -->
-        <img  src="contact.webp" alt="Call center agents in professional attire">
+  <!-- Contact Page -->
+  <main class="contact-page" data-aos="fade-up">
+    <div class="contact-inner">
+
+      <!-- Left: Info -->
+      <div class="contact-info">
+        <div class="section-label">Contact Us</div>
+        <h1>Let's Start a Conversation</h1>
+        <p>Whether you have a defined project, an open question, or are simply exploring what AI could do for your organization &mdash; we would love to hear from you.</p>
+
+        <div class="contact-detail">
+          <div class="contact-detail-icon">&#9993;&#65039;</div>
+          <div class="contact-detail-text">
+            <h4>Email</h4>
+            <a href="mailto:contact@omniversalsystems.com">contact@omniversalsystems.com</a>
+          </div>
+        </div>
+
+        <div class="contact-detail">
+          <div class="contact-detail-icon">&#128336;</div>
+          <div class="contact-detail-text">
+            <h4>Response Time</h4>
+            <p>Within 1 business day</p>
+          </div>
+        </div>
+
+        <div class="what-to-expect">
+          <h4>What to Expect</h4>
+          <ul class="expect-list">
+            <li>A personal reply from a senior team member &mdash; not a sales template</li>
+            <li>A focused conversation about your specific challenge and goals</li>
+            <li>An honest assessment of where AI can and cannot help</li>
+            <li>Clear next steps with no obligation or pressure</li>
+          </ul>
+        </div>
       </div>
-      <!-- Contact Form Section -->
-      <div class="contact-form">
-        <h2>Contact Us</h2>
-        <p>
-          We're here to help. Please fill out the form below and a member of our team will get back to you shortly.
-        </p>
-        <form action="submit_form.php" method="post">
-          <label for="name">Name</label>
-          <input type="text" id="name" name="name" required>
 
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" required>
-
-          <label for="message">Message</label>
-          <textarea id="message" name="message" required></textarea>
-
-          
-            <a href="mailto:contact@omniversalsystems.com">
-              <button type="submit" class="cta-button">Send Message</button>
-            </a>
+      <!-- Right: Form -->
+      <div class="contact-form-wrap" data-aos="fade-up" data-aos-delay="100">
+        <h2>Send Us a Message</h2>
+        <p>Fill out the form and we'll get back to you within one business day.</p>
+        <form action="mailto:contact@omniversalsystems.com" method="post" enctype="text/plain">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Full Name *</label>
+              <input type="text" id="name" name="name" placeholder="Jane Smith" required>
+            </div>
+            <div class="form-group">
+              <label for="company">Company</label>
+              <input type="text" id="company" name="company" placeholder="Acme Corp">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address *</label>
+            <input type="email" id="email" name="email" placeholder="jane@acmecorp.com" required>
+          </div>
+          <div class="form-group">
+            <label for="service">Service of Interest</label>
+            <select id="service" name="service">
+              <option value="" disabled selected>Select a practice area&hellip;</option>
+              <option value="strategy">AI Strategy &amp; Consulting</option>
+              <option value="agentic">Agentic AI &amp; Automation</option>
+              <option value="ml">ML Engineering &amp; MLOps</option>
+              <option value="integration">AI Integration into Existing Products</option>
+              <option value="governance">AI Governance &amp; Safety</option>
+              <option value="other">Not sure yet &mdash; let's talk</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message">Tell Us About Your Challenge *</label>
+            <textarea id="message" name="message" placeholder="Describe the problem you're trying to solve, the outcome you're aiming for, or any context that would help us understand your situation..." required></textarea>
+          </div>
+          <button type="submit" class="form-submit">Send Message &rarr;</button>
+          <p class="form-note">By submitting this form, you agree that we may respond to your inquiry via email.</p>
         </form>
       </div>
+
     </div>
-  </section>
+  </main>
 
-  <!-- AOS Library for scroll animations -->
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems" style="height:32px;">
+        </picture>
+        <p>Intelligent AI systems for forward-thinking organizations. We bridge research and reality.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="blog.html">Insights</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Solutions</h5>
+        <ul>
+          <li><a href="solutions.html">Agentic AI</a></li>
+          <li><a href="solutions.html">AI Strategy</a></li>
+          <li><a href="solutions.html">ML Engineering</a></li>
+          <li><a href="solutions.html">AI Integration</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:contact@omniversalsystems.com">contact@omniversalsystems.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Omniversal Systems. All rights reserved.</p>
+      <p style="color: var(--accent); font-weight:500;">Omnibenevolence in Practice.</p>
+    </div>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>AOS.init({ duration: 900, once: true });</script>
   <script>
-    AOS.init({ duration: 1200 });
+    const hamburger = document.getElementById('hamburger');
+    const navOverlay = document.getElementById('navOverlay');
+    const closeBtn = document.getElementById('closeBtn');
+    hamburger.addEventListener('click', () => navOverlay.classList.add('active'));
+    closeBtn.addEventListener('click', () => navOverlay.classList.remove('active'));
+    document.querySelectorAll('.nav-overlay-menu .nav-link').forEach(link => {
+      link.addEventListener('click', () => navOverlay.classList.remove('active'));
+    });
   </script>
-
-    <!-- JavaScript to Toggle Mobile Menu -->
-    <script>
-      const hamburger = document.getElementById('hamburger');
-      const navOverlay = document.getElementById('navOverlay');
-      const closeBtn = document.getElementById('closeBtn');
-  
-      // Open overlay when hamburger is clicked
-      hamburger.addEventListener('click', function() {
-        navOverlay.classList.add('active');
-      });
-  
-      // Close overlay when X icon is clicked
-      closeBtn.addEventListener('click', function() {
-        navOverlay.classList.remove('active');
-      });
-  
-      // Optional: Close overlay when any menu link is clicked
-      document.querySelectorAll('.nav-overlay-menu .nav-link').forEach(link => {
-        link.addEventListener('click', function() {
-          navOverlay.classList.remove('active');
-        });
-      });
-    </script>
 </body>
 </html>
