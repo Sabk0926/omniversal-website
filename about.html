@@ -91,7 +91,7 @@
     .values-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
     .value-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; transition: border-color var(--transition), transform var(--transition); }
     .value-card:hover { border-color: rgba(0,212,255,0.3); transform: translateY(-3px); }
-    .value-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .value-icon { width: 44px; height: 44px; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; color: var(--accent); }
     .value-card h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text); }
     .value-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; margin: 0; }
 
@@ -101,7 +101,7 @@
     .serve-card { padding: 1.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); }
     .serve-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
     .serve-card p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.65; margin: 0; }
-    .serve-card .serve-icon { font-size: 1.6rem; margin-bottom: 0.75rem; }
+    .serve-card .serve-icon { width: 44px; height: 44px; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; color: var(--accent); }
 
     /* ── CTA BAND ────────────────────────────────────────── */
     .cta-band { background: linear-gradient(135deg, rgba(0,212,255,0.07), rgba(99,102,241,0.07)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 5rem 2rem; text-align: center; }
@@ -226,32 +226,32 @@
       </div>
       <div class="values-grid">
         <div class="value-card" data-aos="fade-up" data-aos-delay="0">
-          <div class="value-icon">&#9878;&#65039;</div>
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
           <h4>Integrity</h4>
           <p>We say what we mean and deliver what we promise. When things go wrong, we own it &mdash; and fix it. No spin, no blame-shifting, no hiding behind complexity.</p>
         </div>
         <div class="value-card" data-aos="fade-up" data-aos-delay="60">
-          <div class="value-icon">&#128161;</div>
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
           <h4>Innovation</h4>
           <p>We actively invest in staying at the frontier. Not for novelty's sake, but because our clients deserve solutions that will remain relevant as technology evolves.</p>
         </div>
         <div class="value-card" data-aos="fade-up" data-aos-delay="120">
-          <div class="value-icon">&#129309;</div>
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <h4>Inclusiveness</h4>
           <p>Great AI is built by diverse teams and serves diverse users. We build with broad perspectives in mind and actively work against systems that exclude or disadvantage.</p>
         </div>
         <div class="value-card" data-aos="fade-up" data-aos-delay="180">
-          <div class="value-icon">&#128270;</div>
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
           <h4>Transparency</h4>
           <p>Our clients always know what we are building, why we are building it, and how it works. Explainability is not an afterthought &mdash; it is built in from day one.</p>
         </div>
         <div class="value-card" data-aos="fade-up" data-aos-delay="240">
-          <div class="value-icon">&#127942;</div>
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg></div>
           <h4>Quality</h4>
           <p>We are not in the business of shipping fast and fixing later. Every deliverable goes through rigorous review because our clients' reputations depend on what we build.</p>
         </div>
         <div class="value-card" data-aos="fade-up" data-aos-delay="300">
-          <div class="value-icon">&#128101;</div>
+          <div class="value-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
           <h4>Human-Centricity</h4>
           <p>The end user is always in the room, even when they are not physically present. We design AI around human needs, not the other way around.</p>
         </div>
@@ -269,22 +269,22 @@
       </div>
       <div class="serve-grid">
         <div class="serve-card" data-aos="fade-up" data-aos-delay="0">
-          <div class="serve-icon">&#128640;</div>
+          <div class="serve-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
           <h4>Startups &amp; Scale-Ups</h4>
           <p>Move fast without technical debt. We help early-stage companies embed AI into their products from day one, building competitive moats that are hard to replicate.</p>
         </div>
         <div class="serve-card" data-aos="fade-up" data-aos-delay="80">
-          <div class="serve-icon">&#127970;</div>
+          <div class="serve-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
           <h4>Mid-Market Companies</h4>
           <p>Maximize the ROI of your existing technology investments by layering AI capabilities that deliver measurable operational improvements &mdash; without disrupting what works.</p>
         </div>
         <div class="serve-card" data-aos="fade-up" data-aos-delay="160">
-          <div class="serve-icon">&#127758;</div>
+          <div class="serve-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
           <h4>Enterprise Organizations</h4>
           <p>Navigate AI at scale with governance, compliance, and change management built in. We help Fortune 500 organizations deploy AI responsibly across complex, regulated environments.</p>
         </div>
         <div class="serve-card" data-aos="fade-up" data-aos-delay="240">
-          <div class="serve-icon">&#127979;</div>
+          <div class="serve-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
           <h4>Public Sector &amp; Non-Profits</h4>
           <p>Technology in service of society. We partner with mission-driven organizations to deploy AI that expands access, reduces inefficiency, and improves outcomes for the people who need it most.</p>
         </div>
