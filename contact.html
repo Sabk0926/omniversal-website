@@ -60,7 +60,7 @@
     .what-to-expect h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
     .expect-list { list-style: none; display: flex; flex-direction: column; gap: 0.85rem; }
     .expect-list li { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
-    .expect-list li::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; margin-top: 0.1rem; }
+    .expect-list li::before { content: '\2713'; color: var(--accent); font-weight: 700; flex-shrink: 0; margin-top: 0.1rem; }
 
     /* ── RIGHT COLUMN — FORM ─────────────────────────────── */
     .contact-form-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; }
@@ -86,7 +86,7 @@
 
     /* ── FOOTER ──────────────────────────────────────────── */
     .footer { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 4rem 2rem 2rem; }
-    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; padding-bottom: 3rem; }
+    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 2.5rem; padding-bottom: 3rem; }
     .footer-brand p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; max-width: 280px; margin-top: 1rem; }
     .footer-col h5 { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; }
     .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
@@ -111,6 +111,7 @@
       <ul class="nav-links">
         <li><a href="about.html">About</a></li>
         <li><a href="solutions.html">Solutions</a></li>
+        <li><a href="products.html">Products</a></li>
         <li><a href="blog.html">Insights</a></li>
         <li><a href="contact.html" class="nav-cta active">Get In Touch</a></li>
       </ul>
@@ -131,6 +132,7 @@
     <ul class="nav-overlay-menu">
       <li><a href="about.html" class="nav-link">About</a></li>
       <li><a href="solutions.html" class="nav-link">Solutions</a></li>
+      <li><a href="products.html" class="nav-link">Products</a></li>
       <li><a href="blog.html" class="nav-link">Insights</a></li>
       <li><a href="contact.html" class="nav-link">Contact</a></li>
     </ul>
@@ -147,7 +149,7 @@
         <p>Whether you have a defined project, an open question, or are simply exploring what AI could do for your organization &mdash; we would love to hear from you.</p>
 
         <div class="contact-detail">
-          <div class="contact-detail-icon">&#9993;&#65039;</div>
+          <div class="contact-detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
           <div class="contact-detail-text">
             <h4>Email</h4>
             <a href="mailto:contact@omniversalsystems.com">contact@omniversalsystems.com</a>
@@ -155,7 +157,7 @@
         </div>
 
         <div class="contact-detail">
-          <div class="contact-detail-icon">&#128336;</div>
+          <div class="contact-detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
           <div class="contact-detail-text">
             <h4>Response Time</h4>
             <p>Within 1 business day</p>
@@ -241,6 +243,13 @@
           <li><a href="solutions.html">AI Strategy</a></li>
           <li><a href="solutions.html">ML Engineering</a></li>
           <li><a href="solutions.html">AI Integration</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Products</h5>
+        <ul>
+          <li><a href="products.html">All Products</a></li>
+          <li><a href="https://dokimata.ai" target="_blank" rel="noopener">dokimata.ai</a></li>
         </ul>
       </div>
       <div class="footer-col">

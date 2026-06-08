@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products — Omniversal Systems</title>
+  <meta name="description" content="Purpose-built AI products from Omniversal Systems. Meet dokimata.ai — the enterprise AI agent security certification platform.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+  <style>
+    :root {
+      --bg-primary: #070B14; --bg-secondary: #0d1422; --bg-card: #111827;
+      --accent: #00D4FF; --accent-hover: #00a8cc; --accent2: #6366f1;
+      --text: #f1f5f9; --text-muted: #94a3b8; --border: rgba(255,255,255,0.08);
+      --radius: 12px; --transition: 0.3s ease;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', Arial, sans-serif; background: var(--bg-primary); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    .navbar { position: fixed; top: 0; left: 0; width: 100%; z-index: 900; display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 3rem; background: rgba(7,11,20,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .navbar .logo img { height: 100px; }
+    .nav-links { list-style: none; display: flex; gap: 2.5rem; align-items: center; }
+    .nav-links li a { color: var(--text-muted); font-size: 0.95rem; font-weight: 500; transition: color var(--transition); }
+    .nav-links li a:hover, .nav-links li a.active { color: var(--accent); }
+    .nav-cta { background: var(--accent) !important; color: #070B14 !important; padding: 0.55rem 1.25rem; border-radius: 6px; font-weight: 700 !important; }
+    .nav-cta:hover { background: var(--accent-hover) !important; transform: scale(1.04); }
+    .hamburger { display: none; flex-direction: column; cursor: pointer; gap: 5px; }
+    .hamburger span { display: block; height: 2.5px; width: 26px; background: var(--text); border-radius: 2px; }
+    .nav-overlay { position: fixed; top: 0; left: 100%; width: 100%; height: 100vh; background: rgba(7,11,20,0.98); backdrop-filter: blur(16px); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: left 0.35s cubic-bezier(0.4,0,0.2,1); z-index: 1000; }
+    .nav-overlay.active { left: 0; }
+    .overlay-header { position: absolute; top: 0; left: 0; width: 100%; padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .overlay-header .logo img { height: 32px; }
+    .close-btn { font-size: 1.8rem; color: var(--text); cursor: pointer; line-height: 1; }
+    .nav-overlay-menu { list-style: none; text-align: center; display: flex; flex-direction: column; gap: 2rem; }
+    .nav-overlay-menu li a { color: var(--text); font-size: 1.6rem; font-weight: 600; transition: color var(--transition); }
+    .nav-overlay-menu li a:hover { color: var(--accent); }
+    @media (max-width: 830px) { .nav-links { display: none; } .hamburger { display: flex; } .navbar { padding: 1.25rem 1.5rem; } }
+
+    .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--accent); color: #070B14; padding: 0.85rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 700; transition: background var(--transition), transform var(--transition), box-shadow var(--transition); box-shadow: 0 4px 20px rgba(0,212,255,0.25); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,212,255,0.35); }
+
+    /* ── PAGE HERO ───────────────────────────────────────── */
+    .page-hero { position: relative; min-height: 60vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 9rem 2rem 5rem; overflow: hidden; background: var(--bg-primary); }
+    .page-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.1) 0%, transparent 60%); pointer-events: none; }
+    .page-hero-content { position: relative; z-index: 1; max-width: 720px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.25); color: var(--accent); padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1.5rem; }
+    .page-hero-content h1 { font-size: clamp(2.5rem, 5vw, 3.8rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .page-hero-content h1 span { background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .page-hero-content p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.75; }
+
+    /* ── SECTION BASE ─────────────────────────────────────── */
+    .section { padding: 6rem 2rem; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+    .section-label { display: inline-flex; align-items: center; gap: 0.6rem; color: var(--accent); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 1rem; }
+    .section-label::before { content: ''; display: inline-block; width: 24px; height: 2px; background: var(--accent); }
+
+    /* ── PRODUCT SECTION ──────────────────────────────────── */
+    .product-section { background: var(--bg-secondary); }
+    .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4.5rem; align-items: center; }
+    @media (max-width: 860px) { .product-grid { grid-template-columns: 1fr; gap: 3rem; } }
+
+    .product-wordmark { font-size: 2rem; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; margin-bottom: 0.6rem; }
+    .product-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .product-tag { background: rgba(0,212,255,0.07); border: 1px solid rgba(0,212,255,0.2); color: var(--accent); padding: 0.22rem 0.7rem; border-radius: 100px; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em; }
+    .product-tag.indigo { background: rgba(99,102,241,0.07); border-color: rgba(99,102,241,0.22); color: var(--accent2); }
+    .product-desc { font-size: 1rem; color: var(--text-muted); line-height: 1.85; margin-bottom: 1.5rem; }
+    .product-tagline { font-size: 0.98rem; color: var(--text); font-style: italic; border-left: 3px solid var(--accent); padding-left: 1.1rem; margin-bottom: 1.75rem; line-height: 1.65; }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 2rem; }
+    .feature-list li { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
+    .feature-list li::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; margin-top: 0.05rem; }
+    .product-meta { margin-top: 1.25rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
+    .product-meta strong { color: var(--text); font-weight: 600; }
+
+    /* ── FLOW CARD ──────────────────────────────────────── */
+    .flow-card { background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; }
+    .flow-card-header { margin-bottom: 1.75rem; }
+    .flow-card-header p { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .flow-card-header h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+    .flow-steps { display: flex; flex-direction: column; }
+    .flow-step { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem 1.1rem; border-radius: 10px; border: 1px solid rgba(0,212,255,0.25); background: rgba(0,212,255,0.04); }
+    .flow-connector { width: 2px; height: 14px; background: rgba(0,212,255,0.2); margin-left: calc(1.1rem + 15px); }
+    .flow-num { width: 32px; height: 32px; border-radius: 50%; background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: var(--accent); flex-shrink: 0; }
+    .flow-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+    .flow-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+    .flow-badge { margin-top: 1.5rem; padding: 1rem 1.1rem; background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; }
+    .flow-badge p { font-size: 0.72rem; color: var(--accent2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.25rem; }
+    .flow-badge span { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── CTA BAND ───────────────────────────────────────── */
+    .cta-band { background: linear-gradient(135deg, rgba(0,212,255,0.07), rgba(99,102,241,0.07)); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 5rem 2rem; text-align: center; }
+    .cta-band h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .cta-band p { color: var(--text-muted); font-size: 1.05rem; max-width: 520px; margin: 0 auto 2.5rem; }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .footer { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 4rem 2rem 2rem; }
+    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 2.5rem; padding-bottom: 3rem; }
+    .footer-brand p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.7; max-width: 280px; margin-top: 1rem; }
+    .footer-col h5 { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.25rem; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+    .footer-col ul li a { font-size: 0.9rem; color: var(--text-muted); transition: color var(--transition); }
+    .footer-col ul li a:hover { color: var(--text); }
+    .footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .footer-bottom p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+    @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } .footer-brand { grid-column: 1 / -1; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="navbar">
+      <a href="home.html" class="logo">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
+        </picture>
+      </a>
+      <ul class="nav-links">
+        <li><a href="about.html">About</a></li>
+        <li><a href="solutions.html">Solutions</a></li>
+        <li><a href="products.html" class="active">Products</a></li>
+        <li><a href="blog.html">Insights</a></li>
+        <li><a href="contact.html" class="nav-cta">Get In Touch</a></li>
+      </ul>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </nav>
+  </header>
+
+  <div class="nav-overlay" id="navOverlay">
+    <div class="overlay-header">
+      <a href="home.html" class="logo">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems">
+        </picture>
+      </a>
+      <div class="close-btn" id="closeBtn">&times;</div>
+    </div>
+    <ul class="nav-overlay-menu">
+      <li><a href="about.html" class="nav-link">About</a></li>
+      <li><a href="solutions.html" class="nav-link">Solutions</a></li>
+      <li><a href="products.html" class="nav-link">Products</a></li>
+      <li><a href="blog.html" class="nav-link">Insights</a></li>
+      <li><a href="contact.html" class="nav-link">Contact</a></li>
+    </ul>
+  </div>
+
+  <!-- Hero -->
+  <section class="page-hero">
+    <div class="page-hero-content" data-aos="fade-up">
+      <div class="hero-badge">Products</div>
+      <h1>Built by Omniversal.<br><span>Trusted by CISOs.</span></h1>
+      <p>Purpose-built tools that grew out of our consulting work — solving the hardest problems in enterprise AI at scale.</p>
+    </div>
+  </section>
+
+  <!-- dokimata.ai -->
+  <section class="section product-section" data-aos="fade-up">
+    <div class="section-inner">
+      <div class="section-label">Featured Product</div>
+      <div class="product-grid">
+
+        <!-- Left: info -->
+        <div>
+          <div class="product-wordmark">dokimata.ai</div>
+          <div class="product-tags">
+            <span class="product-tag">AI Security</span>
+            <span class="product-tag">Agent Certification</span>
+            <span class="product-tag indigo">NIST Aligned</span>
+          </div>
+          <p class="product-desc">Enterprises are deploying AI agents with production access to databases, email, CRM, and finances — often with no security gate before go-live. Dokimata closes that gap with a full certification layer: scan, validate, and continuously monitor every agent before it touches your systems.</p>
+          <p class="product-tagline">"Other tools monitor your agents.<br>Dokimata certifies them."</p>
+          <ul class="feature-list">
+            <li>Inside-out scanning of agent constitution, toolchain, and permissions</li>
+            <li>Behavioral validation through scripted and adversarial test scenarios</li>
+            <li>Prompt injection testing treated as authorization bypass — not a UX issue</li>
+            <li>Data leakage detection mapping PII and confidential data pathways</li>
+            <li>Continuous runtime monitoring against certified specifications</li>
+          </ul>
+          <a href="https://dokimata.ai" target="_blank" rel="noopener" class="btn-primary">Visit dokimata.ai &rarr;</a>
+          <p class="product-meta">A product by <strong>Omniversal Systems</strong> &mdash; currently in private beta with select CISOs in financial services.</p>
+        </div>
+
+        <!-- Right: flow -->
+        <div class="flow-card" data-aos="fade-up" data-aos-delay="100">
+          <div class="flow-card-header">
+            <p>How it works</p>
+            <h3>Quarantine. Scan. Commission.</h3>
+          </div>
+          <div class="flow-steps">
+            <div class="flow-step">
+              <div class="flow-num">1</div>
+              <div>
+                <div class="flow-title">Quarantine</div>
+                <div class="flow-desc">Isolate the agent and its entire toolchain before it is granted any production access.</div>
+              </div>
+            </div>
+            <div class="flow-connector"></div>
+            <div class="flow-step">
+              <div class="flow-num">2</div>
+              <div>
+                <div class="flow-title">Scan</div>
+                <div class="flow-desc">Inside-out security analysis — permissions, prompt injection vectors, PII exposure, and adversarial behavior testing.</div>
+              </div>
+            </div>
+            <div class="flow-connector"></div>
+            <div class="flow-step">
+              <div class="flow-num">3</div>
+              <div>
+                <div class="flow-title">Commission</div>
+                <div class="flow-desc">Issue a versioned, expiry-dated certification badge tied to the agent's manifest hash. Deploy with confidence.</div>
+              </div>
+            </div>
+          </div>
+          <div class="flow-badge">
+            <p>Open Standard</p>
+            <span>Agent Manifest submitted to the NIST AI Agent Standards Initiative — a machine-readable SBOM for AI agents.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-band" data-aos="fade-up">
+    <h2>Deploying AI Agents?</h2>
+    <p>Talk to us about certifying your agents with Dokimata — or about our broader AI Governance &amp; Safety practice.</p>
+    <a href="contact.html" class="btn-primary">Start a Conversation &rarr;</a>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <picture>
+          <source srcset="Color logo - no background.svg" type="image/svg+xml">
+          <img src="Color logo - no background.png" alt="Omniversal Systems" style="height:32px;">
+        </picture>
+        <p>Intelligent AI systems for forward-thinking organizations. We bridge research and reality.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="blog.html">Insights</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Solutions</h5>
+        <ul>
+          <li><a href="solutions.html">Agentic AI</a></li>
+          <li><a href="solutions.html">AI Strategy</a></li>
+          <li><a href="solutions.html">ML Engineering</a></li>
+          <li><a href="solutions.html">AI Integration</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Products</h5>
+        <ul>
+          <li><a href="products.html">All Products</a></li>
+          <li><a href="https://dokimata.ai" target="_blank" rel="noopener">dokimata.ai</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:contact@omniversalsystems.com">contact@omniversalsystems.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Omniversal Systems. All rights reserved.</p>
+      <p style="color: var(--accent); font-weight:500;">Omnibenevolence in Practice.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script>AOS.init({ duration: 900, once: true });</script>
+  <script>
+    const hamburger = document.getElementById('hamburger');
+    const navOverlay = document.getElementById('navOverlay');
+    const closeBtn = document.getElementById('closeBtn');
+    hamburger.addEventListener('click', () => navOverlay.classList.add('active'));
+    closeBtn.addEventListener('click', () => navOverlay.classList.remove('active'));
+    document.querySelectorAll('.nav-overlay-menu .nav-link').forEach(link => {
+      link.addEventListener('click', () => navOverlay.classList.remove('active'));
+    });
+  </script>
+</body>
+</html>

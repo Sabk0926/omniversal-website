@@ -1,0 +1,138 @@
+<style>
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+  .mockup-frame {
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #070B14;
+  }
+  .mockup-frame:hover, .mockup-frame.selected { border-color: #00D4FF; box-shadow: 0 0 0 2px rgba(0,212,255,0.2); }
+  .label-bar { background: rgba(0,212,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.07); padding: 0.55rem 1rem; display: flex; justify-content: space-between; align-items: center; }
+  .label-bar strong { color: #00D4FF; font-size: 0.78rem; letter-spacing: 0.05em; }
+  .label-bar span { color: #94a3b8; font-size: 0.7rem; }
+  .panel { padding: 1.25rem; background: #0d1422; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+
+  /* Option A — Certification Badge */
+  .cert-badge-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
+  .cert-ring { width: 110px; height: 110px; border-radius: 50%; border: 2px solid #00D4FF; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 0 28px rgba(0,212,255,0.25), inset 0 0 18px rgba(0,212,255,0.06); background: rgba(0,212,255,0.04); }
+  .cert-ring::before { content: ''; position: absolute; inset: 6px; border-radius: 50%; border: 1px solid rgba(0,212,255,0.25); }
+  .cert-inner { text-align: center; }
+  .cert-check { font-size: 1.6rem; color: #00D4FF; line-height: 1; }
+  .cert-word { font-size: 0.42rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #00D4FF; margin-top: 0.1rem; }
+  .cert-label { font-size: 0.65rem; color: #94a3b8; text-align: center; max-width: 130px; line-height: 1.4; }
+  .cert-version { font-size: 0.55rem; color: rgba(0,212,255,0.5); font-family: monospace; background: rgba(0,212,255,0.06); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid rgba(0,212,255,0.12); }
+
+  /* Option B — Flow diagram */
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 0; width: 100%; }
+  .flow-step { background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.55rem 1rem; display: flex; align-items: center; gap: 0.6rem; width: 80%; }
+  .flow-step.active { border-color: rgba(0,212,255,0.4); background: rgba(0,212,255,0.06); }
+  .flow-num { width: 22px; height: 22px; border-radius: 50%; background: rgba(0,212,255,0.12); border: 1px solid rgba(0,212,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; color: #00D4FF; flex-shrink: 0; }
+  .flow-text { font-size: 0.68rem; font-weight: 700; color: #f1f5f9; }
+  .flow-sub { font-size: 0.58rem; color: #94a3b8; }
+  .flow-arrow { color: rgba(0,212,255,0.4); font-size: 0.75rem; }
+
+  /* Option C — Stat block */
+  .stats-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; width: 100%; }
+  .stat-box { background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.85rem; text-align: center; }
+  .stat-num { font-size: 1.6rem; font-weight: 800; color: #00D4FF; letter-spacing: -0.02em; line-height: 1; }
+  .stat-label { font-size: 0.58rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.25rem; font-weight: 600; }
+  .nist-box { grid-column: 1 / -1; background: rgba(99,102,241,0.07); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 0.7rem; text-align: center; }
+  .nist-label { font-size: 0.6rem; color: #6366f1; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .nist-text { font-size: 0.62rem; color: #94a3b8; margin-top: 0.2rem; }
+
+  /* Option D — Quote from CISO context */
+  .quote-wrap { width: 100%; }
+  .quote-mark { font-size: 3rem; color: #00D4FF; line-height: 0.8; margin-bottom: 0.5rem; }
+  .quote-text { font-size: 0.78rem; font-style: italic; color: #f1f5f9; line-height: 1.65; border-left: 2px solid #00D4FF; padding-left: 1rem; }
+  .quote-attr { font-size: 0.62rem; color: #94a3b8; margin-top: 0.75rem; padding-left: 1rem; }
+  .quote-attr strong { color: #f1f5f9; }
+</style>
+
+<h2>Right Column — What Goes There Instead of a Screenshot?</h2>
+<p class="subtitle">Four CSS-only options, all matching the site's design. Click to pick.</p>
+
+<div class="options-grid">
+
+  <!-- A: Cert Badge -->
+  <div class="mockup-frame option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="label-bar">
+      <strong>A — Certification Badge Visual</strong>
+      <span>Branded CSS badge, glowing ring</span>
+    </div>
+    <div class="panel">
+      <div class="cert-badge-wrap">
+        <div class="cert-ring">
+          <div class="cert-inner">
+            <div class="cert-check">✓</div>
+            <div class="cert-word">Certified</div>
+          </div>
+        </div>
+        <div class="cert-label">Agent Security Certification by Dokimata</div>
+        <div class="cert-version">v1.0 · SHA-256 · NIST Aligned</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: Flow -->
+  <div class="mockup-frame option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="label-bar">
+      <strong>B — "Quarantine → Scan → Commission" Flow</strong>
+      <span>Visual of their 3-step process</span>
+    </div>
+    <div class="panel">
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div><div class="flow-text">Quarantine</div><div class="flow-sub">Isolate the agent before it touches production</div></div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step active">
+          <div class="flow-num">2</div>
+          <div><div class="flow-text">Scan</div><div class="flow-sub">Inside-out toolchain, permissions &amp; injection testing</div></div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div><div class="flow-text">Commission</div><div class="flow-sub">Issue versioned certification badge tied to manifest</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C: Stats -->
+  <div class="mockup-frame option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="label-bar">
+      <strong>C — Trust Stats &amp; Credentials</strong>
+      <span>Key facts that build credibility</span>
+    </div>
+    <div class="panel">
+      <div class="stats-wrap">
+        <div class="stat-box"><div class="stat-num">100%</div><div class="stat-label">Pre-deploy coverage</div></div>
+        <div class="stat-box"><div class="stat-num">0</div><div class="stat-label">Blind deployments</div></div>
+        <div class="nist-box">
+          <div class="nist-label">NIST AI Agent Standards Initiative</div>
+          <div class="nist-text">Agent Manifest submitted as formal open standard contribution</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- D: Quote -->
+  <div class="mockup-frame option" data-choice="d" onclick="toggleSelect(this)">
+    <div class="label-bar">
+      <strong>D — Pull Quote</strong>
+      <span>Compelling quote from the product's own copy</span>
+    </div>
+    <div class="panel">
+      <div class="quote-wrap">
+        <div class="quote-mark">&ldquo;</div>
+        <div class="quote-text">Other tools monitor your agents.<br>Dokimata certifies them.</div>
+        <div class="quote-attr">— <strong>dokimata.ai</strong> · The trust layer your CISO has been waiting for</div>
+      </div>
+    </div>
+  </div>
+
+</div>
