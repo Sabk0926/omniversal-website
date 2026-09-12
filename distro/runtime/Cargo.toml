@@ -1,0 +1,56 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/omnia-abi",
+    "crates/omnia-core",
+    "crates/omnia-http",
+    "crates/omnia-kernel",
+    "crates/omnia-model",
+    "crates/omnia-parts",
+    "crates/omnia-registry",
+    "crates/omnia-sandbox",
+    "crates/omnia-forge",
+    "crates/omnia-autonomy",
+    "crates/omni",
+    "crates/omniad",
+    "crates/omnia-modeld",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/Sabk0926/omniversal-website"
+
+[workspace.dependencies]
+omnia-abi = { path = "crates/omnia-abi" }
+omnia-core = { path = "crates/omnia-core" }
+omnia-http = { path = "crates/omnia-http" }
+omnia-kernel = { path = "crates/omnia-kernel" }
+omnia-model = { path = "crates/omnia-model" }
+omnia-autonomy = { path = "crates/omnia-autonomy" }
+omnia-parts = { path = "crates/omnia-parts" }
+omnia-registry = { path = "crates/omnia-registry" }
+omnia-sandbox = { path = "crates/omnia-sandbox" }
+omnia-forge = { path = "crates/omnia-forge" }
+
+libc = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# Release profile tuned for the embedded target: the binaries live on a board
+# with an SD card and 4 GB of RAM, so size is worth more than the last few
+# percent of throughput. Inference happens in llama.cpp, not here.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# The autonomous daemon is the exception: it runs continuously and its event
+# loop is hot enough that speed beats a few hundred kilobytes.
+[profile.release.package.omniad]
+opt-level = 2
