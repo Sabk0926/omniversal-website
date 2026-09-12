@@ -1,319 +1,326 @@
-# Omnia OS — design record
+# Omnia OS design
 
-Living document. Records what is settled, why, and what is still open. Supersedes the
-earlier docs in this directory, which described a desktop-first, confirm-on-write design
-with a Python runtime and no capability generation. That design is abandoned; those docs
-were deleted rather than left to mislead.
+Working document. Records what we decided and why, plus what's still open.
 
-## Thesis
+## What we're building
 
-The user never needs to know a command, and when the OS lacks a capability, it builds
-one, proves it works, and permanently gains it.
+An Ubuntu 24.04 derivative where you never need to know a command, and where the OS
+builds capabilities it doesn't have.
 
-The design tension this creates — freedom to invent vs. discipline to remember — is
-resolved by making *declaration*, not execution, the terminal step of building. See the
-README for the lifecycle.
+Ask for nightly photo backups on a machine with no backup tool. It builds one, tests that
+a file actually restores, packages it as a `.deb`, and installs it. The machine now has
+backup. So does any other machine you copy that package to.
 
-## Settled decisions
+## The problem this has to solve
 
-| # | Decision | Choice | Reasoning |
-|---|---|---|---|
-| 1 | Kernel role | Kernel notices (uevents, eBPF, `/dev/omnia`); userspace reasons | No FPU/SIMD in ring 0, no multi-hundred-MB tensor allocations, no forked kernel, keeps stock Ubuntu kernel updates and Secure Boot |
-| 2 | Hardware floor | 4 GB ARM64 SBC, 1.5B int4 orchestrator | If the OS doesn't work on the floor target it isn't in the design; forces the parts library (below) rather than wishful code generation |
-| 3 | Shipping | One multi-arch deb source → amd64 ISO + arm64 `.img` | Familiar apt upgrade path; one rootfs recipe, two assemblers |
-| 4 | Autonomy | Full, everywhere; nothing prompts the user **about anything it can undo** | Safety comes from floors that make bad outcomes recoverable, not from prompts that make them the user's fault. See decision 15 for where that boundary actually falls |
-| 15 | Driver source trust | Curated sources autonomous; arbitrary repositories prepared but not acted on | Autonomy extends exactly as far as reversibility. A backdoored driver that ran with ring-0 privilege is not undone by uninstalling it, so none of the mechanisms justifying autonomy apply |
-| 5 | Language | Rust userspace, C for module + BPF, llama.cpp for inference | Ctrl-G pays interpreter startup per keypress (Python: ~200–300 ms on a Pi off SD, Rust: ~2 ms); 55 MB of CPython in the initramfs vs ~3 MB static; and Python cannot consume BPF ringbufs without a C shim |
-| 6 | Code origin | **Both**: compose from a vetted parts library, *and* escalate to a large model for novel code | A 1.5B model cannot write a correct backup daemon but can reliably wire `snapshot + schedule + encrypt`; escalation covers the long tail where hardware/network allows |
-| 7 | Generated-code trust | Declared-permission sandbox; undeclared access denied by construction | Manifest renders into systemd hardening (`DeviceAllow`, `ProtectSystem`, `SystemCallFilter`) + seccomp — reuses a mature sandbox rather than inventing one |
-| 8 | Ring 0 | Prefer userspace drivers; self-written kernel modules only with rollback sentinel armed | There is no sandbox for ring 0; a userspace driver can be killed, a module cannot |
-| 9 | Proof | A capability is not kept until it writes a test that proves it *works* and that test passes; the test is retained | "The backup ran" and "the backup can be restored" are different claims and only the second matters; retention turns capabilities into a regression suite |
-| 10 | Observation | **Nothing audits itself.** Every layer is checked by the layer beneath it | A component's own account of itself is worthless when it is the thing that is broken. The kernel watchdog observing the executor, and `OMNIA_IOC_EMIT` refusing `GUARD_DENY`, are the first two instances |
-| 11 | Baselines | Learn per-host statistical baselines, not fixed thresholds | Catches gradual degradation (a fan dying over months, a leak over weeks) that no threshold sees; a limit correct for a desktop is wrong for a fanless SBC in a hot cabinet |
-| 12 | Audit integrity | Hash-chained records + independent kernel cross-check | Makes tampering detectable without infrastructure or telemetry. Honest limit: detection, not prevention — see "the circularity problem" |
-| 13 | Learning | Capabilities, baselines, knowledge base and routing first; **weight updates last** | Capabilities are inspectable, reversible and transferable; weights are none of those, and baking behaviour into weights destroys the audit story |
-| 14 | Adapter training | Builder box trains, fleet installs a signed `.deb`; eligible data is verified outcomes (structure, not content) plus explicit user corrections | The 4 GB floor cannot train — that is arithmetic. Verified-only intake is also the defence against model collapse |
+The OS needs freedom to invent things it doesn't have. It also needs to remember what it
+invented. Those pull against each other.
 
-## Safety: three floors, no prompts
+Without discipline you get twelve half-working backup scripts, three of them running at
+once, and a machine nobody can explain a year later.
 
-1. **Kernel floor (BPF-LSM)** — enforced below the root daemon, pinned before it starts,
-   in a cgroup it cannot edit. Covers: boot-device writes, undo-journal deletion, guard
-   self-modification, root unmount, human-access paths (sshd keys, sudoers, console).
-   `omniad` refuses the executor claim unless the guard reports ACTIVE.
-2. **Capability sandbox** — the permission manifest, rendered into systemd unit hardening
-   plus seccomp.
-3. **Reversibility** — every action records its reverse before executing; generated
-   capabilities are `.deb`s so removal is `apt remove`; a boot sentinel replays the undo
-   journal if a boot after an autonomous change fails to reach `multi-user.target` twice.
+Without freedom you get something that only does what someone anticipated.
 
-Plus an action budget with a circuit breaker: repeated failed remediation of the same
-symptom drops to observe-only rather than looping unattended.
+**The fix: building ends in declaring, not in running.** Every generated capability
+becomes a `.deb`. That gives us:
+
+| Need | How `.deb` answers it |
+|---|---|
+| Undo it | `apt remove` |
+| Why is this here? | `dpkg -l` plus a provenance file |
+| Put it on my other machine | copy the file |
+| Did it break? | its test is retained and re-run |
+
+Building a custom registry would mean reimplementing packaging, badly.
+
+## How a capability gets built
+
+Any request goes through the same five steps. A request can come from you typing, or from
+an event that implies a need (a device appeared, a disk is filling).
+
+| Step | What happens |
+|---|---|
+| 1. Look it up | Do we already have this? If yes, use it. This is what stops the junk drawer. |
+| 2. Plan | Can we build it from vetted parts? The small local model wires them together. If it needs genuinely new code, escalate to a bigger model. |
+| 3. Write the permissions | Before any code: exactly which paths, devices, syscalls and network it needs. Anything not listed is blocked. |
+| 4. Prove it | The model writes a test that proves the capability works. A backup must restore a file byte-for-byte. If the test fails, nothing gets installed. |
+| 5. Declare it | Build the `.deb`, install it, register it. Keep the test and re-run it on every upgrade. |
+
+Step 4 is the important one. It's the difference between "the OS built itself a backup"
+being reassuring or alarming.
+
+### Parts library
+
+Vetted building blocks the small model composes: `snapshot`, `schedule`, `encrypt`,
+`sync`, `watch-path`, `notify`, `http-fetch`, `usb-bulk`, `i2c-read`, `spi-xfer`,
+`serial`, `framing`, `archive`, `verify-restore`.
+
+This is what makes the 4 GB floor realistic. A 1.5B model can't write a correct backup
+daemon. It can reliably pick `snapshot + schedule + encrypt` and point them at
+`~/Pictures`. The library grows once, centrally, for everyone.
+
+## Decisions
+
+| # | Decision | Why |
+|---|---|---|
+| 1 | Kernel notices, userspace reasons | No floating point in ring 0, no forked kernel, keeps stock Ubuntu kernel updates and Secure Boot |
+| 2 | 4 GB ARM64 board is the floor | If it doesn't work there it isn't in the design. Forces the parts library instead of wishful thinking |
+| 3 | One deb source, two image builders | amd64 ISO for desktops, arm64 `.img` for boards, one rootfs recipe |
+| 4 | Full autonomy, but only as far as things can be undone | See decision 15 for where that line falls |
+| 5 | Rust userspace, C for module and BPF | Shell integration pays interpreter startup per keypress (~250ms on a Pi vs ~2ms). CPython is 55 MB in the initramfs vs ~3 MB. Python also can't read BPF ringbufs without a C shim |
+| 6 | Build from parts *and* escalate to a big model | A 1.5B can wire parts but can't write daemons. Escalation covers the rest where hardware allows |
+| 7 | Generated code declares its permissions up front | Renders into systemd hardening plus seccomp. Reuses a mature sandbox instead of writing one |
+| 8 | Prefer userspace drivers | You can kill a userspace driver. There's no sandbox for a kernel module |
+| 9 | Nothing is kept until its test passes | "The backup ran" and "the backup can be restored" are different claims |
+| 10 | Nothing audits itself | A broken component's report on itself is worthless. Each layer is checked by the one below it |
+| 11 | Learn per-host baselines, not fixed thresholds | A limit that's right for a desktop is wrong for a fanless board in a hot cabinet. Gradual failures cross no threshold |
+| 12 | Hash-chained audit plus a kernel cross-check | Makes tampering detectable with no external infrastructure |
+| 13 | Learn in capabilities first, weights last | Capabilities can be inspected, reverted and deleted. Weights can't |
+| 14 | Adapters train on a builder box, not on the board | A 4 GB board can't train. Training data is structure, not file contents |
+| 15 | Curated driver sources act alone; arbitrary repos don't | A backdoored driver that ran as the kernel isn't undone by uninstalling it |
 
 ## The driver ladder
 
-A uevent with VID/PID, PCI class or DT `compatible` walks cheapest-and-safest first.
+When a device appears with no driver, work down this list. Cheapest and safest first.
 
-| # | Situation | Action | Cost |
-|---|---|---|---|
-| 1 | In-kernel module not loaded | `modprobe`, verify bind | filesystem lookup, no model |
-| 2 | Missing firmware blob | fetch from `linux-firmware`, reload | filesystem lookup, no model |
-| 3 | Needs quirk / ID / udev rule / modprobe option / DT overlay | generate **config, not code** | 1.5B classification |
-| 4 | Out-of-tree source exists | fetch, build against running kernel, DKMS, load, verify | **see open question 1** |
-| 5 | USB/I2C/SPI/serial, no driver anywhere | generate a **sandboxed userspace driver** | parts composition |
-| 6 | Novel ring-0 device | scaffold + harness, load only with sentinel armed | escalation |
-
-Rows 1–4 cover the large majority of real "no driver" situations. Row 5 is where the
-thesis literally happens and is sandboxable by construction. Row 6's real blocker is
-missing information — a driver *is* the register map, and no model infers one from a USB
-ID — not code generation.
-
-### Rung 4 source trust
-
-Rung 4 fetches and compiles third-party code into the kernel. It is simultaneously the
-highest-value rung and the only place in the design where the OS would extend trust
-outward. Three tiers:
-
-| Tier | Sources | Autonomous? |
+| # | Situation | What happens |
 |---|---|---|
-| **A** | Ubuntu archive, `linux-firmware`, `ubuntu-drivers`, archive DKMS packages | yes — archive-key signed |
-| **B** | A vetted DKMS index you operate and sign | yes — your key, your review |
-| **C** | Arbitrary vendor or community repositories | **no** |
+| 1 | Driver is in the kernel, just not loaded | `modprobe`, check it binds |
+| 2 | Needs a firmware blob | Fetch from `linux-firmware`, reload |
+| 3 | Needs a quirk, ID, udev rule, or device-tree overlay | Generate config. No code |
+| 4 | Driver source exists somewhere | Fetch, build against this kernel, DKMS, load, verify |
+| 5 | USB/I2C/SPI/serial with no driver anywhere | Write a sandboxed userspace driver |
+| 6 | Novel device needing kernel code | Scaffold and build, load only with rollback armed |
 
-For tier C the OS still does nearly all the work: identify the candidate repository, read
-the source, build it in a sandbox, generate the test, and write a summary of what the code
-does and what privileges it wants. What it will not do is decide to trust it. The result
-is queued as a prepared decision (`omni pending`), so the human supplies a yes or no to a
-fully-analysed candidate rather than a research project. That is consistent with the
-thesis: the user still never has to know a command.
+Rows 1 and 2 are two filesystem lookups and don't wake the model at all. Most devices end
+there.
 
-Two things substantially blunt the cost of curation:
+Row 5 is where the OS actually writes a driver, and it's sandboxable because it's
+userspace. Good fit for boards, where an undocumented I2C sensor is a real and common
+case.
 
-- **The ladder absorbs it.** When rung 4 is blocked for an obscure USB, I2C or serial
-  device, rung 5 is usually still available — and a generated userspace driver is the
-  *safer* outcome anyway. Curation pushes work down to the rung we prefer.
-- **The decision is made once per driver, not once per machine.** An approved tier-C
-  driver enters the tier-B index, after which the entire fleet acquires it autonomously.
+Row 6's real blocker isn't writing code. A driver is essentially the chip's register map,
+and nothing can infer that from a USB ID. With a datasheet it's doable. Without one,
+nothing can do it.
 
-## Parts library
+### Driver source trust (rung 4)
 
-Vetted, tested building blocks with typed manifests that the small model composes:
-`snapshot`, `schedule`, `encrypt`, `sync`, `watch-path`, `notify`, `http-fetch`,
-`usb-bulk`, `i2c-read`, `spi-xfer`, `serial`, `framing`, `archive`, `verify-restore`.
+Rung 4 compiles third-party code into your kernel. It's the most useful rung and the only
+place the OS extends trust outward.
 
-This is what makes the 4 GB floor honest. The library grows once, centrally, for
-everyone — not per machine.
+| Sources | Acts alone? |
+|---|---|
+| Ubuntu archive, `linux-firmware`, archive DKMS packages | Yes, archive-signed |
+| A DKMS index you vet and sign | Yes, your key |
+| Arbitrary vendor or community repos | No |
 
-## Self-diagnosis, self-healing, self-audit
+For the third case the OS does everything except decide. It finds the candidate, reads
+the source, builds it in a sandbox, generates the test, and writes up what the code does
+and what privileges it wants. Then it waits. You answer yes or no to a finished analysis,
+not a research project.
 
-Governed by decision 10: nothing audits itself. Capabilities are checked by the daemon,
-the daemon by the kernel, the kernel from off-box.
+Two things make this cheaper than it sounds:
 
-### Diagnosis — three levels
+- When rung 4 is blocked, rung 5 usually still works, and a sandboxed userspace driver is
+  the better outcome anyway.
+- You approve a driver once, not once per machine. It joins your signed index and the
+  fleet picks it up automatically.
 
-| Level | Question | Mechanism |
+## Keeping itself working
+
+The rule: **nothing audits itself.** Capabilities are checked by the daemon. The daemon is
+checked by the kernel. The kernel is checked from off-box.
+
+### Diagnosing
+
+| Level | Question | How |
 |---|---|---|
-| Liveness | is it running? | systemd, plus the kernel watchdog on the executor claim |
-| **Correctness** | is it doing the right thing? | **the retained capability tests** |
-| Baseline | is this normal *for this machine*? | learned per-host profile |
+| Liveness | Is it running? | systemd, plus the kernel watchdog on the executor |
+| Correctness | Is it doing the right thing? | The retained capability tests |
+| Baseline | Is this normal for this machine? | Learned per-host profile |
 
-The middle level is the unusual one and it falls out of the architecture for free. Because
-every capability carries a test that proves it *works*, the machine accumulates an
-executable definition of "healthy" that grows as it gains capabilities. `omni doctor` is
-therefore not a static script: it is "run everything this machine claims it can do."
+The middle one comes free. Every capability keeps the test that proved it, so the machine
+ends up with a working definition of "healthy" that grows as it gains capabilities.
+`omni doctor` runs everything the machine claims it can do.
 
-Conventional monitoring can only report that the backup process exited 0. It can never
-report that the backup can be restored.
+Normal monitoring can tell you the backup process exited 0. It can't tell you the backup
+can be restored.
 
-Baselines tracked: thermal curve, disk growth rate, boot time, RSS ceilings, service
-restart frequency, unit start latency. Cold start is roughly a week, during which the
-system has no baseline opinion and says so rather than guessing.
+Baselines tracked: temperature curve, disk growth rate, boot time, memory ceilings,
+restart frequency. Takes about a week to learn, and says so rather than guessing before
+then.
 
-### Healing — escalation ladder
+### Healing
 
-Verification is **the same retained test that originally proved the capability**, never
-the model's own assessment. Without an objective criterion, self-healing degenerates into
-a system that confidently reports success.
+Verification at every tier is the capability's own retained test, not the model's opinion
+that it fixed things.
 
-| Tier | Action | Reversal |
+| Tier | Action | How to undo |
 |---|---|---|
-| 0 | restart / reload the unit | trivial |
-| 1 | reconfigure | undo journal |
-| 2 | repair or reinstall the package | `apt` |
-| 3 | **re-forge the capability** | previous `.deb` retained |
-| 4 | roll back to last known-good | boot sentinel |
-| 5 | stop, degrade safely, report loudly | — |
+| 0 | Restart or reload the unit | trivial |
+| 1 | Reconfigure | undo journal |
+| 2 | Repair or reinstall the package | `apt` |
+| 3 | Rebuild the capability | previous `.deb` |
+| 4 | Roll back to last known-good | boot sentinel |
+| 5 | Stop, degrade safely, report loudly | — |
 
-Tier 3 is the payoff for the whole architecture. Concretely: a kernel upgrade breaks a
-generated USB driver, its retained test fails on next boot, and the OS rebuilds the driver
-against the new kernel and re-runs the test. If it passes the machine keeps working with
-nobody paged. If it fails, tier 4 rolls back the kernel and *then* reports.
+Tier 3 is the payoff. A kernel upgrade breaks a generated USB driver. Its test fails on
+next boot. The OS rebuilds the driver against the new kernel and re-runs the test. If it
+passes, nobody gets paged. If it fails, tier 4 rolls the kernel back and then reports.
 
-This is only possible because the machine knows what its own capabilities are supposed to
-do. A system without retained tests has nothing to re-forge against.
+This only works because the machine knows what its capabilities are supposed to do.
 
-### Audit — and the circularity problem
+### Auditing
 
-A root daemon writing its own audit log can lie or omit. If `omniad` is compromised or
-simply malfunctioning, its account of what it did is worth nothing. Auditing is the one
-function that cannot be self-hosted, and claiming otherwise would not survive review.
+A root daemon writing its own log can lie or leave things out. If `omniad` is broken or
+compromised, its account of itself is worth nothing. So:
 
-Implemented:
+1. **Hash-chained records.** Each entry commits to the previous one, so edits and
+   deletions show up. Cheap, always on.
+2. **Kernel cross-check.** The module counts executor actions, and the guard counts
+   denials, in maps the daemon can't write. A doctored log shows up as a mismatch.
 
-1. **Hash-chained records** — each entry commits to the previous, making deletion and
-   editing detectable. Near-free; unconditional.
-2. **Kernel cross-check** — the module independently counts executor actions, and the
-   guard counts denials, in maps `omniad` cannot write. A divergence between what the
-   daemon logged and what the kernel observed is hard evidence of a problem.
+Records include the reasoning, not just the action: inputs, the plan, what it rejected,
+and the test result. "Why did it restart postgres at 3am" needs a better answer than "it
+restarted postgres at 3am."
 
-Deferred, and the only real answers to full host compromise: off-box anchoring of the
-chain head, and fleet mutual attestation. Both need infrastructure outside the machine.
-
-**The honest limit:** a single fully-compromised box with no external anchor cannot audit
-itself. That is arithmetic, not a gap to be engineered away.
-
-Record format requirement: **audit the reasoning, not only the action** — inputs, the plan
-chosen, alternatives rejected, and the test result. "Why did it restart postgres at 03:00"
-must have an answer other than "it restarted postgres at 03:00."
+**Limit worth stating plainly:** a fully compromised machine with nothing outside it can't
+audit itself. Off-box anchoring and fleet cross-checking are the only real answers, and
+both need something beyond the one box. Deferred, not rejected.
 
 ## Learning
 
-Ordered cheapest and safest first. Weight updates are the last resort, not the first.
+Ordered by how inspectable each option is. Weights come last.
 
-| # | Mechanism | Inspectable | Reversible | Transferable |
+| # | Mechanism | Can you read it? | Can you undo it? | Can you copy it? |
 |---|---|---|---|---|
-| 1 | **Capabilities** | yes — a `.deb` | `apt remove` | copy the file |
-| 2 | **Baselines** | yes — numbers | delete the row | per-host by nature |
-| 3 | **Host knowledge base** — incidents, what worked, what did not | yes — editable text | delete the entry | selectively |
-| 4 | **Learned routing / few-shot exemplars** | yes — text | revert | yes |
-| 5 | **LoRA adapter** | no — opaque weights | swap the file | yes |
-| 6 | Full fine-tune | no | no | no |
+| 1 | Capabilities | Yes, it's a `.deb` | `apt remove` | Copy the file |
+| 2 | Baselines | Yes, numbers | Delete the row | Per-host anyway |
+| 3 | Knowledge base (incidents, what worked) | Yes, editable text | Delete the entry | Selectively |
+| 4 | Learned routing and examples | Yes, text | Revert | Yes |
+| 5 | LoRA adapter | No | Swap the file | Yes |
+| 6 | Full fine-tune | No | No | No |
 
-Levels 1–4 provide most of what "it is learning" feels like with no loss of auditability.
+Levels 1 to 4 give most of what "it's learning" feels like, with nothing hidden.
 
-### Why adapters are nevertheless worth it here
+### Why adapters are still worth it
 
-The retained capability tests yield labelled training data as a by-product of normal
-operation: every forge attempt is `(situation → plan chosen → test passed or failed)`,
-with an *objective* label. Most on-device learning has no ground truth and ends up
-training on "the user did not complain," which is noise.
+The retained tests produce labelled training data as a side effect. Every build attempt is
+`(request → plan chosen → test passed or failed)`, with a real label. Most on-device
+learning has no ground truth and ends up training on "the user didn't complain," which is
+noise.
 
-Scope is deliberately narrow: **plan selection** (which parts to compose), **tool-call
-format adherence**, and **local vocabulary** (device names, site conventions). Not general
-reasoning, not world knowledge.
+Scope stays narrow: picking which parts to compose, tool-call formatting, and local
+vocabulary like your device names. Not general reasoning.
 
-### Risks and their mitigations
+### The three risks
 
-| Risk | Mitigation |
+| Risk | What we do about it |
 |---|---|
-| Catastrophic forgetting — a 1.5B model has little headroom and is *more* fragile to fine-tuning than a large one | The eval suite includes a frozen general-capability regression set; an adapter that regresses it is discarded |
-| Model collapse from training on its own output | Only **verified** examples are eligible — the retained test must have passed. Never the model's own say-so |
-| Cannot train on the floor target | LoRA on a 1.5B needs ~6–12 GB even with checkpointing and 8-bit optimisers. Training happens on the builder box, never on the board |
+| Forgetting. A 1.5B model has little headroom and is more fragile to fine-tuning than a big one | The eval suite includes a frozen general-capability set. An adapter that regresses it is thrown away |
+| Collapse from training on its own output | Only examples whose test actually passed are eligible |
+| Can't train on a 4 GB board | LoRA on a 1.5B needs 6–12 GB. Training happens on the builder box |
 
-### Adapter lifecycle
+### How an adapter ships
 
-An adapter is just another capability and inherits the whole pipeline:
+An adapter is a capability, so it goes through the same pipeline.
 
 ```
-collect verified examples (+ redacted user corrections)
-  → train on the builder box, never on the board
-  → PROVE: must beat the incumbent on a frozen eval suite
-           (retained capability tests + general-capability regression set)
-  → shadow mode: run alongside the incumbent, compare decisions
-  → DECLARE: signed .deb, versioned, swappable; fleet installs it
+collect verified examples (plus redacted user corrections)
+  → train on the builder box
+  → must beat the current adapter on a frozen eval suite
+  → shadow run: compare decisions against the current one
+  → ship as a signed .deb; apt remove reverts it
 ```
 
-An adapter must prove itself before activation exactly as a backup tool must restore a
-file. Failing the eval means discarded, never activated; regressing later means
-`apt remove` and the previous version returns.
+Same builder box that handles novel code generation. One capable machine serves the
+fleet.
 
-The builder box is the same machine already designated as the escalation target for novel
-code generation — one capable machine serves the fleet for both.
+### What can become training data
 
-### Training-data policy
+Allowed: the request, the plan, which parts were used, the test result, and your explicit
+corrections after redaction.
 
-Eligible: the intent, the plan chosen, which parts were composed, the test result, and
-explicit user corrections after redaction review.
+Not allowed: file contents, command output, anything the context providers read.
 
-Excluded: file contents, command output, and anything the context providers read. The
-system learns that *requests shaped like this* are served by `snapshot + schedule +
-encrypt`, without ever learning what is in the photos.
+So it learns that requests shaped a certain way are served by `snapshot + schedule +
+encrypt`. It never learns what's in your photos.
 
-User corrections are the highest-signal data available — a human-labelled correction is
-worth many passive examples — but they routinely quote paths and content, so they pass
-through redaction before becoming eligible.
+The reason for the line: levels 1–4 let you delete one specific thing. A trained adapter
+doesn't. There's no "forget that one file."
 
-Note the asymmetry that motivates the exclusions: levels 1–4 support selective deletion;
-**a trained adapter does not.** There is no "forget that one file" once it is in weights.
+## Safety
 
-## Open questions
+Three layers, none of which ask you anything:
 
-1. ~~Where may rung 4 look for driver source?~~ **Settled** — see "Rung 4 source
-   trust" above. Curated sources act autonomously; arbitrary repositories are prepared
-   and analysed but never trusted without a human yes.
-2. Which 1.5B / 0.5B GGUF builds to pin, and whether their licences permit
-   redistribution inside an image — and separately whether they permit LoRA
-   fine-tuning and redistribution of the resulting adapter.
-3. Whether escalation defaults to a large local model, a cloud API, or a builder machine
-   on the LAN when more than one is available.
-4. How much of the parts library ships in v1 — it determines whether a Pi can build
+1. **Kernel floor.** BPF-LSM programs pinned before `omniad` starts, in a cgroup it can't
+   edit. Blocks: writing the boot device, deleting the undo journal, modifying the guard,
+   unmounting root, and touching the paths that keep you able to log in. `omniad` refuses
+   to run autonomously unless the guard reports active.
+2. **Capability sandbox.** The permission manifest becomes systemd hardening plus seccomp.
+3. **Reversibility.** Every action records its undo first. Generated capabilities are
+   packages. If a boot after an autonomous change fails twice, the initramfs replays the
+   undo journal.
+
+Plus an action budget with a circuit breaker. If it keeps failing to fix the same thing,
+it drops to watching instead of looping all night.
+
+## Where the code lives
+
+```
+distro/
+├── kernel/          C. Written.
+│   ├── omnia-kmod/  char device, event ring, executor claim, watchdog
+│   └── bpf/         probes + the BPF-LSM floor + loader
+├── runtime/         Rust workspace, 15 crates. Stubs.
+│   └── crates/      abi, core, http, kernel, model, parts, forge, registry,
+│                    sandbox, autonomy, audit, learn, omni, omniad, omnia-modeld
+├── images/          Not started. amd64 ISO + arm64 img.
+└── docs/            This file.
+```
+
+No libbpf anywhere. The ringbuf is read by mmapping the map fd directly, which is stable
+kernel ABI. So the image ships no libbpf and the build needs no libelf.
+
+## Build order
+
+The original plan was seven horizontal phases: foundation, then model layer, then the
+forge, and so on. That's probably wrong. It means building three layers before finding
+out whether the core idea works.
+
+Better: a thin vertical slice. The minimum of every layer needed to make one capability
+work end to end.
+
+- enough `omnia-core` to load config
+- enough `omnia-model` to talk to llama.cpp
+- three parts: `snapshot`, `schedule`, `verify-restore`
+- the full five-step pipeline
+- the cold-capability test
+
+That's the riskiest part of the system. If it works, everything else is a variation on a
+pipeline that already runs. If it doesn't, we find out in a week.
+
+## Notes on the kernel code
+
+- `omnia_abi.h` has no padding by design, so Rust can assert struct sizes at compile time
+  and re-parse the header in a test. A DKMS module built from one version talking to a
+  package from another otherwise shows up as garbled events, not an error.
+- The event ring drops the **oldest** record when full. During an incident the newest
+  events are the ones that explain it. Sequence numbers skip so the gap is visible.
+- One process holds the executor claim, and the kernel raises an event if it stops
+  heartbeating. A stuck daemon otherwise looks exactly like a healthy idle one.
+- `OMNIA_IOC_EMIT` refuses `GUARD_DENY`. That's the event proving the floor works, so
+  userspace must not be able to fake it.
+
+## Still open
+
+1. Which 1.5B and 0.5B GGUF builds to pin. Also whether their licences allow shipping them
+   in an image and redistributing a LoRA adapter trained on them.
+2. Whether escalation defaults to a big local model, a cloud API, or a builder box on the
+   LAN when more than one is available.
+3. How much of the parts library ships in v1. This decides whether a board can build
    anything useful offline.
-5. What the frozen general-capability regression set actually contains, and who owns
-   it. It is the only thing standing between incremental learning and a model that has
-   quietly forgotten how to do its job.
-6. Off-box audit anchoring and fleet mutual attestation are deferred, not rejected.
-   They become necessary the moment this ships to someone else's hardware.
-
-## Implementation phases
-
-1. **Foundation** — `omnia-abi` (compile-time size asserts + header-parity test),
-   `omnia-core`, `omnia-kernel` (device client, native BPF ringbuf mmap consumer, sysfs
-   pollers, merged event stream).
-2. **Model layer** — probe (CUDA/ROCm/Tegra/RKNN/Hailo/Vulkan/CPU), catalog, llama.cpp
-   supervisor with lazy load / idle unload / hot swap, tier routing and escalation.
-3. **Forge** — parts, registry, sandbox, and the five-stage pipeline end to end, with
-   backup as the reference capability.
-4. **Driver ladder** — uevent ingestion, rungs 1–4, then userspace generation (rung 5),
-   then rung 6 behind the sentinel.
-5. **Autonomy** — event loop, triage, budget/breaker, undo journal, boot sentinel,
-   executor claim and heartbeat.
-6. **Surface** — `omni` CLI, shell integration, systemd units, initramfs hook.
-7. **Packaging, images, docs** — deb set, both image builders, full docs.
-
-## Verification strategy
-
-The test that proves the thesis (`tests/cold-capability/`): start from an image with no
-backup tool, issue "back up ~/Pictures nightly", then assert
-
-1. a `.deb` now exists and is installed,
-2. its permission manifest names only `~/Pictures` and the destination,
-3. its retained test passes,
-4. a file restores **byte-for-byte**,
-5. `apt remove` leaves the machine clean,
-6. asking again does **not** build a second one.
-
-Driver ladder (`tests/devices/`): a `dummy_hcd` USB gadget with an unknown VID/PID
-exercises rungs 3 and 5; assert a sandboxed userspace driver is generated, its test
-passes, and its unit's `DeviceAllow` names only that device.
-
-Autonomy (`tests/faults/`): fill a disk, kill a unit, stall the scheduler, drive a
-thermal event. Each asserts the daemon acted, undo replays cleanly, the budget
-decremented, and the kernel guard refuses the out-of-bounds variant.
-
-## Notes on what is built
-
-`kernel/` is real and compiles as C. Highlights worth knowing when reading it:
-
-- `omnia_abi.h` is **padding-free by construction**, and the Rust side asserts struct
-  sizes at compile time plus re-parses the header in a test. A DKMS module built from one
-  version talking to a package from another otherwise shows up as garbled events rather
-  than an error.
-- The event ring drops the **oldest** record when full, not the newest: during an
-  incident the newest events are the ones that explain it. Sequence numbers skip so the
-  gap stays visible.
-- Exactly one process may hold the executor claim, and the kernel watchdog emits an event
-  if it stops heart-beating — a wedged autonomous daemon is more dangerous than an absent
-  one, so its absence must be observable.
-- `OMNIA_IOC_EMIT` refuses `OMNIA_EV_GUARD_DENY`. The one event type that attests the
-  floor is enforcing must not be forgeable by any userspace writer.
-- No `libbpf` anywhere: the ringbuf is consumed by mmapping the map fd directly (stable
-  kernel ABI), so the image ships no libbpf and the build needs no libelf.
+4. What's in the frozen general-capability eval set, and who owns it. It's the only thing
+   between incremental learning and a model that quietly forgot its job.
+5. When off-box audit anchoring becomes necessary. It does the moment this runs on
+   someone else's hardware.

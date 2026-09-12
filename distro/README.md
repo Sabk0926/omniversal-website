@@ -1,74 +1,68 @@
 # Omnia OS
 
-**A self-extending agentic operating system, based on Ubuntu 24.04.**
+An Ubuntu 24.04 derivative built on one idea:
 
-> The user never needs to know a command. When the OS lacks a capability, it builds one,
-> proves it works, and permanently gains it.
+> You never need to know a command. If the OS doesn't have a capability, it builds one,
+> tests it, and keeps it.
 
-Ask for nightly photo backups on a machine with no backup tool, and you don't get advice
-or a shell command — you get a real, tested, packaged backup capability that the machine
-now *has*, and can copy to your other machines. Plug in a device with no driver, and the
-OS walks a ladder from `modprobe` up to writing a sandboxed userspace driver, tests that
-the device actually returns sane data, and keeps it only if it does.
+Ask for nightly photo backups on a machine with no backup tool. You don't get advice or a
+shell command. You get a backup tool: built, tested to prove a file actually restores,
+packaged, installed. The machine has backup now. So does any machine you copy that package
+to.
 
-This is not Ubuntu with a chatbot in the dock. The model is the interface and the
-maintainer, and the OS's vocabulary grows over its lifetime.
+Plug in a device with no driver and it works down a ladder, from `modprobe` up to writing
+a sandboxed userspace driver, keeping it only if the device returns sane data.
 
----
+This isn't Ubuntu with a chatbot in the dock.
 
-## The central problem
+## Why generated things become .deb packages
 
-Total **freedom** to invent what it lacks, total **discipline** to remember what it
-invented. These fight each other:
+Anything the OS builds has to be undoable, explainable and copyable. Packages already do
+that:
 
-- Freedom alone → a junk drawer of twelve half-working backup scripts, three running at
-  once, and a machine nobody can explain six months later.
-- Discipline alone → something that can only ever do what was anticipated.
-
-**The resolution: building something ends in *declaring* it, not in running it.** Every
-generated capability becomes a versioned, tested, uninstallable `.deb`. Undo is
-`apt remove`. Fleet distribution is copying a file. "Why is this on my machine" is
-`dpkg -l` plus a provenance record. Thirty years of packaging infrastructure, reused
-instead of reinvented.
-
-## The capability lifecycle
-
-Every intent — your words, or an event that implies a need — walks one pipeline:
-
-| Stage | What happens |
+| Need | Answer |
 |---|---|
-| **1. Registry** | Do I already have this? Hit → use it. This is what prevents the junk drawer. |
-| **2. Plan** | Composable from vetted parts? → the 1.5B local model wires them (offline, Pi-capable). Genuinely novel code? → escalate to a large local or cloud model. |
-| **3. Materialise** | Emit a **permission manifest** first: exactly which paths, devices, syscalls and network. Undeclared access is denied by construction. |
-| **4. Prove** | The model must write a test that proves the *capability*, not that the process exited 0. A backup must restore a file byte-for-byte. Fails → discarded, never installed. |
-| **5. Declare** | Build a real `.deb`, install, register. The test is retained and re-run on every kernel and package upgrade. |
+| Undo it | `apt remove` |
+| Why is this here? | `dpkg -l` plus a provenance file |
+| Put it on my laptop too | copy the file |
+| Did an upgrade break it? | its test is kept and re-run |
 
-Stage 4 is load-bearing. It is what makes "the OS built itself a backup" trustworthy
-rather than terrifying.
+A custom registry would mean rewriting packaging, worse.
 
-## It diagnoses, heals and learns
+## How it builds something
 
-Governed by one rule: **nothing audits itself.** Capabilities are checked by the daemon,
-the daemon by the kernel, the kernel from off-box.
+| Step | What happens |
+|---|---|
+| 1 | Do we already have this? If yes, use it. Stops the junk drawer of twelve backup scripts |
+| 2 | Build it from vetted parts if possible. The small local model wires them. Genuinely new code escalates to a bigger model |
+| 3 | Write the permissions first: which paths, devices, syscalls, network. Anything unlisted is blocked |
+| 4 | The model writes a test proving it works. A backup must restore a file byte-for-byte. Test fails, nothing installs |
+| 5 | Package it, install it, keep the test |
 
-- **Diagnosis** — because every capability carries a test that proves it *works*, the
-  machine accumulates an executable definition of "healthy" that grows as it gains
-  capabilities. `omni doctor` runs everything the machine claims it can do. Conventional
-  monitoring can report that the backup process exited 0; it can never report that the
-  backup can be restored.
-- **Healing** — a kernel upgrade breaks a generated USB driver, its retained test fails on
-  next boot, and the OS **rebuilds the driver against the new kernel** and re-runs the
-  test. Passes, and nobody is paged. Fails, and it rolls back the kernel and *then*
-  reports. Verification is always the retained test, never the model's own opinion that
-  it fixed things.
-- **Learning** — ordered by how inspectable it is. Capabilities first, then per-host
-  baselines and a knowledge base, and only last a LoRA adapter trained on a builder box
-  from verified outcomes. Weights are the only level that can't be selectively deleted,
-  so they're the last resort rather than the headline.
+Step 4 is what makes "the OS built itself a backup" reassuring rather than alarming.
+
+## It fixes itself
+
+One rule: **nothing audits itself.** Capabilities are checked by the daemon, the daemon by
+the kernel, the kernel from off-box.
+
+**Diagnosing.** Because every capability keeps the test that proved it, the machine builds
+up a working definition of "healthy" that grows as it learns things. `omni doctor` runs
+everything the machine claims it can do. Normal monitoring tells you the backup process
+exited 0; it can't tell you the backup can be restored.
+
+**Healing.** A kernel upgrade breaks a generated USB driver. Its test fails on next boot.
+The OS rebuilds that driver against the new kernel and re-runs the test. Passes, nobody
+gets paged. Fails, it rolls the kernel back and then tells you.
+
+**Learning.** In order of how much you can inspect: capabilities first, then per-host
+baselines and an incident history, and only last a LoRA adapter trained on a builder box
+from verified outcomes. Weights are the only level you can't selectively delete, so
+they're last, not the headline.
 
 ## Architecture
 
-The kernel *notices*; userspace *reasons*. No inference in ring 0, ever.
+The kernel notices. Userspace reasons. No inference in ring 0.
 
 ```
    kernel                                     userspace
@@ -80,38 +74,35 @@ The kernel *notices*; userspace *reasons*. No inference in ring 0, ever.
  │  event ring, executor claim│           └──────────────┬──────────────┘
  ├────────────────────────────┤                          │
  │ BPF-LSM guard              │                   ┌──────▼───────┐
- │  SELF-PRESERVATION FLOOR   │                   │ omnia-modeld │
- │  enforced below the daemon │                   │ llama.cpp    │
+ │  the things it must never  │                   │ omnia-modeld │
+ │  do, enforced below it     │                   │ llama.cpp    │
  └────────────────────────────┘                   └──────────────┘
 ```
 
-**Why the floor is in the kernel:** the system is fully autonomous — a root daemon acts
-unattended. A never-list the daemon enforces on itself is one bad generation away from
-not existing. The BPF-LSM programs are pinned before `omniad` starts, in a cgroup it
-cannot edit, and `omniad` refuses the executor role unless the guard reports ACTIVE.
-No floor, no autonomy.
+The guard is in the kernel because the daemon runs as root and acts unattended. A rule the
+daemon enforces on itself is one bad generation away from not existing. The guard is
+pinned before `omniad` starts, in a cgroup it can't edit, and `omniad` refuses to act
+autonomously unless the guard reports active.
 
 ## Status
 
-**Alpha, in active design.** See [docs/DESIGN.md](docs/DESIGN.md) for the full record
-including open questions.
+Alpha, in design. See [docs/DESIGN.md](docs/DESIGN.md).
 
-| Component | State |
+| Part | State |
 |---|---|
 | `kernel/omnia-kmod/` — char device, event ring, executor claim, watchdog | written, ~470 lines C |
-| `kernel/bpf/` — CO-RE probes + BPF-LSM self-preservation floor | written, ~470 lines C |
-| `kernel/omnia-kmod/omnia_abi.h` — padding-free ABI, parity-checked | written |
-| `runtime/` — Rust workspace, 15 crates (abi, core, kernel, model, parts, forge, registry, sandbox, autonomy, audit, learn, http, CLI, daemons) | skeleton only, builds clean |
-| `images/` — amd64 ISO + arm64 flashable builders | not started |
+| `kernel/bpf/` — probes + BPF-LSM floor | written, ~470 lines C |
+| `runtime/` — Rust workspace, 15 crates | stubs, builds clean |
+| `images/` — amd64 ISO + arm64 flashable | not started |
 
-Nothing here boots yet. The kernel layer is the part that is real.
+Nothing boots yet. The kernel layer is the part that's real.
 
 ## Targets
 
-Floor is a **4 GB ARM64 SBC** (Pi 5 class) running a 1.5B int4 orchestrator — if it
-doesn't work there, it isn't in the design. The same multi-arch source produces an amd64
-hybrid ISO for desktops and a flashable arm64 image for boards.
+The floor is a 4 GB ARM64 board running a 1.5B model. If it doesn't work there, it isn't
+in the design. The same source produces an amd64 ISO for desktops and a flashable arm64
+image for boards.
 
 ## Licence
 
-GPL-3.0-or-later, matching the Ubuntu base it derives from.
+GPL-3.0-or-later, same as the Ubuntu base.
