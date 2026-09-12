@@ -21,7 +21,8 @@ README for the lifecycle.
 | 1 | Kernel role | Kernel notices (uevents, eBPF, `/dev/omnia`); userspace reasons | No FPU/SIMD in ring 0, no multi-hundred-MB tensor allocations, no forked kernel, keeps stock Ubuntu kernel updates and Secure Boot |
 | 2 | Hardware floor | 4 GB ARM64 SBC, 1.5B int4 orchestrator | If the OS doesn't work on the floor target it isn't in the design; forces the parts library (below) rather than wishful code generation |
 | 3 | Shipping | One multi-arch deb source → amd64 ISO + arm64 `.img` | Familiar apt upgrade path; one rootfs recipe, two assemblers |
-| 4 | Autonomy | Full, everywhere; nothing prompts the user | User decision. Safety is provided by floors that make bad outcomes impossible, not by prompts that make them the user's fault |
+| 4 | Autonomy | Full, everywhere; nothing prompts the user **about anything it can undo** | Safety comes from floors that make bad outcomes recoverable, not from prompts that make them the user's fault. See decision 15 for where that boundary actually falls |
+| 15 | Driver source trust | Curated sources autonomous; arbitrary repositories prepared but not acted on | Autonomy extends exactly as far as reversibility. A backdoored driver that ran with ring-0 privilege is not undone by uninstalling it, so none of the mechanisms justifying autonomy apply |
 | 5 | Language | Rust userspace, C for module + BPF, llama.cpp for inference | Ctrl-G pays interpreter startup per keypress (Python: ~200–300 ms on a Pi off SD, Rust: ~2 ms); 55 MB of CPython in the initramfs vs ~3 MB static; and Python cannot consume BPF ringbufs without a C shim |
 | 6 | Code origin | **Both**: compose from a vetted parts library, *and* escalate to a large model for novel code | A 1.5B model cannot write a correct backup daemon but can reliably wire `snapshot + schedule + encrypt`; escalation covers the long tail where hardware/network allows |
 | 7 | Generated-code trust | Declared-permission sandbox; undeclared access denied by construction | Manifest renders into systemd hardening (`DeviceAllow`, `ProtectSystem`, `SystemCallFilter`) + seccomp — reuses a mature sandbox rather than inventing one |
@@ -65,6 +66,33 @@ Rows 1–4 cover the large majority of real "no driver" situations. Row 5 is whe
 thesis literally happens and is sandboxable by construction. Row 6's real blocker is
 missing information — a driver *is* the register map, and no model infers one from a USB
 ID — not code generation.
+
+### Rung 4 source trust
+
+Rung 4 fetches and compiles third-party code into the kernel. It is simultaneously the
+highest-value rung and the only place in the design where the OS would extend trust
+outward. Three tiers:
+
+| Tier | Sources | Autonomous? |
+|---|---|---|
+| **A** | Ubuntu archive, `linux-firmware`, `ubuntu-drivers`, archive DKMS packages | yes — archive-key signed |
+| **B** | A vetted DKMS index you operate and sign | yes — your key, your review |
+| **C** | Arbitrary vendor or community repositories | **no** |
+
+For tier C the OS still does nearly all the work: identify the candidate repository, read
+the source, build it in a sandbox, generate the test, and write a summary of what the code
+does and what privileges it wants. What it will not do is decide to trust it. The result
+is queued as a prepared decision (`omni pending`), so the human supplies a yes or no to a
+fully-analysed candidate rather than a research project. That is consistent with the
+thesis: the user still never has to know a command.
+
+Two things substantially blunt the cost of curation:
+
+- **The ladder absorbs it.** When rung 4 is blocked for an obscure USB, I2C or serial
+  device, rung 5 is usually still available — and a generated userspace driver is the
+  *safer* outcome anyway. Curation pushes work down to the rung we prefer.
+- **The decision is made once per driver, not once per machine.** An approved tier-C
+  driver enters the tier-B index, after which the entire fleet acquires it autonomously.
 
 ## Parts library
 
@@ -219,11 +247,9 @@ Note the asymmetry that motivates the exclusions: levels 1–4 support selective
 
 ## Open questions
 
-1. **Where may rung 4 look for driver source?** Fetching and building arbitrary internet
-   code into the kernel autonomously is the highest-value rung *and* a supply-chain
-   attack surface. Current recommendation: signed/curated sources only (Ubuntu archive,
-   `linux-firmware`, a vetted DKMS index), with arbitrary repositories as
-   escalation-only. **Not yet decided.**
+1. ~~Where may rung 4 look for driver source?~~ **Settled** — see "Rung 4 source
+   trust" above. Curated sources act autonomously; arbitrary repositories are prepared
+   and analysed but never trusted without a human yes.
 2. Which 1.5B / 0.5B GGUF builds to pin, and whether their licences permit
    redistribution inside an image — and separately whether they permit LoRA
    fine-tuning and redistribution of the resulting adapter.
