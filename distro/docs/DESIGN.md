@@ -27,6 +27,11 @@ README for the lifecycle.
 | 7 | Generated-code trust | Declared-permission sandbox; undeclared access denied by construction | Manifest renders into systemd hardening (`DeviceAllow`, `ProtectSystem`, `SystemCallFilter`) + seccomp — reuses a mature sandbox rather than inventing one |
 | 8 | Ring 0 | Prefer userspace drivers; self-written kernel modules only with rollback sentinel armed | There is no sandbox for ring 0; a userspace driver can be killed, a module cannot |
 | 9 | Proof | A capability is not kept until it writes a test that proves it *works* and that test passes; the test is retained | "The backup ran" and "the backup can be restored" are different claims and only the second matters; retention turns capabilities into a regression suite |
+| 10 | Observation | **Nothing audits itself.** Every layer is checked by the layer beneath it | A component's own account of itself is worthless when it is the thing that is broken. The kernel watchdog observing the executor, and `OMNIA_IOC_EMIT` refusing `GUARD_DENY`, are the first two instances |
+| 11 | Baselines | Learn per-host statistical baselines, not fixed thresholds | Catches gradual degradation (a fan dying over months, a leak over weeks) that no threshold sees; a limit correct for a desktop is wrong for a fanless SBC in a hot cabinet |
+| 12 | Audit integrity | Hash-chained records + independent kernel cross-check | Makes tampering detectable without infrastructure or telemetry. Honest limit: detection, not prevention — see "the circularity problem" |
+| 13 | Learning | Capabilities, baselines, knowledge base and routing first; **weight updates last** | Capabilities are inspectable, reversible and transferable; weights are none of those, and baking behaviour into weights destroys the audit story |
+| 14 | Adapter training | Builder box trains, fleet installs a signed `.deb`; eligible data is verified outcomes (structure, not content) plus explicit user corrections | The 4 GB floor cannot train — that is arithmetic. Verified-only intake is also the defence against model collapse |
 
 ## Safety: three floors, no prompts
 
@@ -70,6 +75,148 @@ Vetted, tested building blocks with typed manifests that the small model compose
 This is what makes the 4 GB floor honest. The library grows once, centrally, for
 everyone — not per machine.
 
+## Self-diagnosis, self-healing, self-audit
+
+Governed by decision 10: nothing audits itself. Capabilities are checked by the daemon,
+the daemon by the kernel, the kernel from off-box.
+
+### Diagnosis — three levels
+
+| Level | Question | Mechanism |
+|---|---|---|
+| Liveness | is it running? | systemd, plus the kernel watchdog on the executor claim |
+| **Correctness** | is it doing the right thing? | **the retained capability tests** |
+| Baseline | is this normal *for this machine*? | learned per-host profile |
+
+The middle level is the unusual one and it falls out of the architecture for free. Because
+every capability carries a test that proves it *works*, the machine accumulates an
+executable definition of "healthy" that grows as it gains capabilities. `omni doctor` is
+therefore not a static script: it is "run everything this machine claims it can do."
+
+Conventional monitoring can only report that the backup process exited 0. It can never
+report that the backup can be restored.
+
+Baselines tracked: thermal curve, disk growth rate, boot time, RSS ceilings, service
+restart frequency, unit start latency. Cold start is roughly a week, during which the
+system has no baseline opinion and says so rather than guessing.
+
+### Healing — escalation ladder
+
+Verification is **the same retained test that originally proved the capability**, never
+the model's own assessment. Without an objective criterion, self-healing degenerates into
+a system that confidently reports success.
+
+| Tier | Action | Reversal |
+|---|---|---|
+| 0 | restart / reload the unit | trivial |
+| 1 | reconfigure | undo journal |
+| 2 | repair or reinstall the package | `apt` |
+| 3 | **re-forge the capability** | previous `.deb` retained |
+| 4 | roll back to last known-good | boot sentinel |
+| 5 | stop, degrade safely, report loudly | — |
+
+Tier 3 is the payoff for the whole architecture. Concretely: a kernel upgrade breaks a
+generated USB driver, its retained test fails on next boot, and the OS rebuilds the driver
+against the new kernel and re-runs the test. If it passes the machine keeps working with
+nobody paged. If it fails, tier 4 rolls back the kernel and *then* reports.
+
+This is only possible because the machine knows what its own capabilities are supposed to
+do. A system without retained tests has nothing to re-forge against.
+
+### Audit — and the circularity problem
+
+A root daemon writing its own audit log can lie or omit. If `omniad` is compromised or
+simply malfunctioning, its account of what it did is worth nothing. Auditing is the one
+function that cannot be self-hosted, and claiming otherwise would not survive review.
+
+Implemented:
+
+1. **Hash-chained records** — each entry commits to the previous, making deletion and
+   editing detectable. Near-free; unconditional.
+2. **Kernel cross-check** — the module independently counts executor actions, and the
+   guard counts denials, in maps `omniad` cannot write. A divergence between what the
+   daemon logged and what the kernel observed is hard evidence of a problem.
+
+Deferred, and the only real answers to full host compromise: off-box anchoring of the
+chain head, and fleet mutual attestation. Both need infrastructure outside the machine.
+
+**The honest limit:** a single fully-compromised box with no external anchor cannot audit
+itself. That is arithmetic, not a gap to be engineered away.
+
+Record format requirement: **audit the reasoning, not only the action** — inputs, the plan
+chosen, alternatives rejected, and the test result. "Why did it restart postgres at 03:00"
+must have an answer other than "it restarted postgres at 03:00."
+
+## Learning
+
+Ordered cheapest and safest first. Weight updates are the last resort, not the first.
+
+| # | Mechanism | Inspectable | Reversible | Transferable |
+|---|---|---|---|---|
+| 1 | **Capabilities** | yes — a `.deb` | `apt remove` | copy the file |
+| 2 | **Baselines** | yes — numbers | delete the row | per-host by nature |
+| 3 | **Host knowledge base** — incidents, what worked, what did not | yes — editable text | delete the entry | selectively |
+| 4 | **Learned routing / few-shot exemplars** | yes — text | revert | yes |
+| 5 | **LoRA adapter** | no — opaque weights | swap the file | yes |
+| 6 | Full fine-tune | no | no | no |
+
+Levels 1–4 provide most of what "it is learning" feels like with no loss of auditability.
+
+### Why adapters are nevertheless worth it here
+
+The retained capability tests yield labelled training data as a by-product of normal
+operation: every forge attempt is `(situation → plan chosen → test passed or failed)`,
+with an *objective* label. Most on-device learning has no ground truth and ends up
+training on "the user did not complain," which is noise.
+
+Scope is deliberately narrow: **plan selection** (which parts to compose), **tool-call
+format adherence**, and **local vocabulary** (device names, site conventions). Not general
+reasoning, not world knowledge.
+
+### Risks and their mitigations
+
+| Risk | Mitigation |
+|---|---|
+| Catastrophic forgetting — a 1.5B model has little headroom and is *more* fragile to fine-tuning than a large one | The eval suite includes a frozen general-capability regression set; an adapter that regresses it is discarded |
+| Model collapse from training on its own output | Only **verified** examples are eligible — the retained test must have passed. Never the model's own say-so |
+| Cannot train on the floor target | LoRA on a 1.5B needs ~6–12 GB even with checkpointing and 8-bit optimisers. Training happens on the builder box, never on the board |
+
+### Adapter lifecycle
+
+An adapter is just another capability and inherits the whole pipeline:
+
+```
+collect verified examples (+ redacted user corrections)
+  → train on the builder box, never on the board
+  → PROVE: must beat the incumbent on a frozen eval suite
+           (retained capability tests + general-capability regression set)
+  → shadow mode: run alongside the incumbent, compare decisions
+  → DECLARE: signed .deb, versioned, swappable; fleet installs it
+```
+
+An adapter must prove itself before activation exactly as a backup tool must restore a
+file. Failing the eval means discarded, never activated; regressing later means
+`apt remove` and the previous version returns.
+
+The builder box is the same machine already designated as the escalation target for novel
+code generation — one capable machine serves the fleet for both.
+
+### Training-data policy
+
+Eligible: the intent, the plan chosen, which parts were composed, the test result, and
+explicit user corrections after redaction review.
+
+Excluded: file contents, command output, and anything the context providers read. The
+system learns that *requests shaped like this* are served by `snapshot + schedule +
+encrypt`, without ever learning what is in the photos.
+
+User corrections are the highest-signal data available — a human-labelled correction is
+worth many passive examples — but they routinely quote paths and content, so they pass
+through redaction before becoming eligible.
+
+Note the asymmetry that motivates the exclusions: levels 1–4 support selective deletion;
+**a trained adapter does not.** There is no "forget that one file" once it is in weights.
+
 ## Open questions
 
 1. **Where may rung 4 look for driver source?** Fetching and building arbitrary internet
@@ -78,11 +225,17 @@ everyone — not per machine.
    `linux-firmware`, a vetted DKMS index), with arbitrary repositories as
    escalation-only. **Not yet decided.**
 2. Which 1.5B / 0.5B GGUF builds to pin, and whether their licences permit
-   redistribution inside an image.
+   redistribution inside an image — and separately whether they permit LoRA
+   fine-tuning and redistribution of the resulting adapter.
 3. Whether escalation defaults to a large local model, a cloud API, or a builder machine
    on the LAN when more than one is available.
 4. How much of the parts library ships in v1 — it determines whether a Pi can build
    anything useful offline.
+5. What the frozen general-capability regression set actually contains, and who owns
+   it. It is the only thing standing between incremental learning and a model that has
+   quietly forgotten how to do its job.
+6. Off-box audit anchoring and fleet mutual attestation are deferred, not rejected.
+   They become necessary the moment this ships to someone else's hardware.
 
 ## Implementation phases
 

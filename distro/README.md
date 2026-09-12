@@ -46,6 +46,26 @@ Every intent — your words, or an event that implies a need — walks one pipel
 Stage 4 is load-bearing. It is what makes "the OS built itself a backup" trustworthy
 rather than terrifying.
 
+## It diagnoses, heals and learns
+
+Governed by one rule: **nothing audits itself.** Capabilities are checked by the daemon,
+the daemon by the kernel, the kernel from off-box.
+
+- **Diagnosis** — because every capability carries a test that proves it *works*, the
+  machine accumulates an executable definition of "healthy" that grows as it gains
+  capabilities. `omni doctor` runs everything the machine claims it can do. Conventional
+  monitoring can report that the backup process exited 0; it can never report that the
+  backup can be restored.
+- **Healing** — a kernel upgrade breaks a generated USB driver, its retained test fails on
+  next boot, and the OS **rebuilds the driver against the new kernel** and re-runs the
+  test. Passes, and nobody is paged. Fails, and it rolls back the kernel and *then*
+  reports. Verification is always the retained test, never the model's own opinion that
+  it fixed things.
+- **Learning** — ordered by how inspectable it is. Capabilities first, then per-host
+  baselines and a knowledge base, and only last a LoRA adapter trained on a builder box
+  from verified outcomes. Weights are the only level that can't be selectively deleted,
+  so they're the last resort rather than the headline.
+
 ## Architecture
 
 The kernel *notices*; userspace *reasons*. No inference in ring 0, ever.
@@ -81,7 +101,7 @@ including open questions.
 | `kernel/omnia-kmod/` — char device, event ring, executor claim, watchdog | written, ~470 lines C |
 | `kernel/bpf/` — CO-RE probes + BPF-LSM self-preservation floor | written, ~470 lines C |
 | `kernel/omnia-kmod/omnia_abi.h` — padding-free ABI, parity-checked | written |
-| `runtime/` — Rust workspace (abi, core, kernel, model, forge, registry, sandbox, autonomy, CLI, daemons) | skeleton only |
+| `runtime/` — Rust workspace, 15 crates (abi, core, kernel, model, parts, forge, registry, sandbox, autonomy, audit, learn, http, CLI, daemons) | skeleton only, builds clean |
 | `images/` — amd64 ISO + arm64 flashable builders | not started |
 
 Nothing here boots yet. The kernel layer is the part that is real.

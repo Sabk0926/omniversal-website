@@ -11,6 +11,8 @@ members = [
     "crates/omnia-sandbox",
     "crates/omnia-forge",
     "crates/omnia-autonomy",
+    "crates/omnia-audit",
+    "crates/omnia-learn",
     "crates/omni",
     "crates/omniad",
     "crates/omnia-modeld",
@@ -34,6 +36,8 @@ omnia-parts = { path = "crates/omnia-parts" }
 omnia-registry = { path = "crates/omnia-registry" }
 omnia-sandbox = { path = "crates/omnia-sandbox" }
 omnia-forge = { path = "crates/omnia-forge" }
+omnia-audit = { path = "crates/omnia-audit" }
+omnia-learn = { path = "crates/omnia-learn" }
 
 libc = "0.2"
 serde = { version = "1", features = ["derive"] }

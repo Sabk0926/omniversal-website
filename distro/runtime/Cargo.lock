@@ -11,6 +11,10 @@ name = "omnia-abi"
 version = "0.1.0"
 
 [[package]]
+name = "omnia-audit"
+version = "0.1.0"
+
+[[package]]
 name = "omnia-autonomy"
 version = "0.1.0"
 
@@ -28,6 +32,10 @@ version = "0.1.0"
 
 [[package]]
 name = "omnia-kernel"
+version = "0.1.0"
+
+[[package]]
+name = "omnia-learn"
 version = "0.1.0"
 
 [[package]]
