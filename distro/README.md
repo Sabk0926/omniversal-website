@@ -99,9 +99,16 @@ Nothing boots yet. The kernel layer is the part that's real.
 
 ## Targets
 
-The floor is a 4 GB ARM64 board running a 1.5B model. If it doesn't work there, it isn't
-in the design. The same source produces an amd64 ISO for desktops and a flashable arm64
-image for boards.
+The floor is an 8 GB ARM64 board running a 3-4B model at int4, about 2-2.5 GB resident.
+If it doesn't work there, it isn't in the design. There's enough headroom left to load a
+7B transiently, so the floor target can handle its own escalation rather than always
+needing a bigger machine.
+
+Clears the floor: Pi 5 8GB, Orange Pi 5, Radxa Rock 5B, Jetson Orin Nano 8GB. Rules out
+Pi 4, Pi Zero and most cheap industrial boards.
+
+The same source produces an amd64 ISO for desktops and a flashable arm64 image for
+boards.
 
 ## Licence
 

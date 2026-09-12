@@ -55,20 +55,39 @@ Vetted building blocks the small model composes: `snapshot`, `schedule`, `encryp
 `sync`, `watch-path`, `notify`, `http-fetch`, `usb-bulk`, `i2c-read`, `spi-xfer`,
 `serial`, `framing`, `archive`, `verify-restore`.
 
-This is what makes the 4 GB floor realistic. A 1.5B model can't write a correct backup
-daemon. It can reliably pick `snapshot + schedule + encrypt` and point them at
-`~/Pictures`. The library grows once, centrally, for everyone.
+The 8 GB floor runs a 3-4B model at int4, around 2-2.5 GB resident. That's meaningfully
+better than the 1.5B the old 4 GB floor allowed: better at structured output, tool-call
+formatting and multi-step planning.
+
+It still can't write a correct backup daemon, and neither can a 7B. That's why the parts
+library stays the primary path. Note what changed though: at 4 GB the library was forced
+on us, at 8 GB it's a choice. We're keeping it because composing tested parts is
+verifiable and generating a critical daemon from scratch isn't, regardless of model size.
+The library grows once, centrally, for everyone.
+
+### Model tiers
+
+| Tier | Size | Where | Job |
+|---|---|---|---|
+| initramfs | 1.5B int4, ~1 GB | boot partition, opt-in | Boot-failure triage before the rootfs is up |
+| **orchestrator** | **3-4B int4, ~2-2.5 GB** | resident | **The floor. Everything the OS depends on must work here** |
+| desktop | 7B+ int4 | loaded on demand | Harder planning, rung 5 driver generation |
+| cloud | — | opt-in, off by default | Escalation when local can't |
+
+At 8 GB the orchestrator stays resident and a 7B can still be loaded transiently, which
+means the floor target can do its own escalation instead of always needing the builder
+box. That's the main practical gain over 4 GB.
 
 ## Decisions
 
 | # | Decision | Why |
 |---|---|---|
 | 1 | Kernel notices, userspace reasons | No floating point in ring 0, no forked kernel, keeps stock Ubuntu kernel updates and Secure Boot |
-| 2 | 4 GB ARM64 board is the floor | If it doesn't work there it isn't in the design. Forces the parts library instead of wishful thinking |
+| 2 | 8 GB ARM64 board is the floor | If it doesn't work there it isn't in the design. Buys a 3-4B orchestrator and enough headroom to load a 7B transiently |
 | 3 | One deb source, two image builders | amd64 ISO for desktops, arm64 `.img` for boards, one rootfs recipe |
 | 4 | Full autonomy, but only as far as things can be undone | See decision 15 for where that line falls |
 | 5 | Rust userspace, C for module and BPF | Shell integration pays interpreter startup per keypress (~250ms on a Pi vs ~2ms). CPython is 55 MB in the initramfs vs ~3 MB. Python also can't read BPF ringbufs without a C shim |
-| 6 | Build from parts *and* escalate to a big model | A 1.5B can wire parts but can't write daemons. Escalation covers the rest where hardware allows |
+| 6 | Build from parts *and* escalate to a big model | Composing tested parts is verifiable; generating a critical daemon from scratch isn't, at any model size. Escalation covers what parts can't express |
 | 7 | Generated code declares its permissions up front | Renders into systemd hardening plus seccomp. Reuses a mature sandbox instead of writing one |
 | 8 | Prefer userspace drivers | You can kill a userspace driver. There's no sandbox for a kernel module |
 | 9 | Nothing is kept until its test passes | "The backup ran" and "the backup can be restored" are different claims |
@@ -76,7 +95,7 @@ daemon. It can reliably pick `snapshot + schedule + encrypt` and point them at
 | 11 | Learn per-host baselines, not fixed thresholds | A limit that's right for a desktop is wrong for a fanless board in a hot cabinet. Gradual failures cross no threshold |
 | 12 | Hash-chained audit plus a kernel cross-check | Makes tampering detectable with no external infrastructure |
 | 13 | Learn in capabilities first, weights last | Capabilities can be inspected, reverted and deleted. Weights can't |
-| 14 | Adapters train on a builder box, not on the board | A 4 GB board can't train. Training data is structure, not file contents |
+| 14 | Adapters train on a builder box, not on the board | 8 GB still can't train. Training data is structure, not file contents |
 | 15 | Curated driver sources act alone; arbitrary repos don't | A backdoored driver that ran as the kernel isn't undone by uninstalling it |
 
 ## The driver ladder
@@ -217,9 +236,9 @@ vocabulary like your device names. Not general reasoning.
 
 | Risk | What we do about it |
 |---|---|
-| Forgetting. A 1.5B model has little headroom and is more fragile to fine-tuning than a big one | The eval suite includes a frozen general-capability set. An adapter that regresses it is thrown away |
+| Forgetting. A 3-4B model still has limited headroom and is more fragile to fine-tuning than a large one | The eval suite includes a frozen general-capability set. An adapter that regresses it is thrown away |
 | Collapse from training on its own output | Only examples whose test actually passed are eligible |
-| Can't train on a 4 GB board | LoRA on a 1.5B needs 6–12 GB. Training happens on the builder box |
+| Can't train on the floor target | LoRA on a 3-4B needs 12-20 GB. 8 GB minus the OS and a resident model doesn't come close. Training happens on the builder box |
 
 ### How an adapter ships
 
@@ -291,6 +310,10 @@ out whether the core idea works.
 Better: a thin vertical slice. The minimum of every layer needed to make one capability
 work end to end.
 
+Boards that clear the 8 GB floor: Pi 5 8GB, Orange Pi 5 8/16GB, Radxa Rock 5B, Jetson
+Orin Nano 8GB. It rules out Pi 4, Pi Zero, Jetson Nano and most cheap industrial boards.
+That's a real narrowing of reach and worth revisiting if a deployment needs those.
+
 - enough `omnia-core` to load config
 - enough `omnia-model` to talk to llama.cpp
 - three parts: `snapshot`, `schedule`, `verify-restore`
@@ -314,10 +337,12 @@ pipeline that already runs. If it doesn't, we find out in a week.
 
 ## Still open
 
-1. Which 1.5B and 0.5B GGUF builds to pin. Also whether their licences allow shipping them
-   in an image and redistributing a LoRA adapter trained on them.
+1. Which 3-4B and 1.5B GGUF builds to pin (orchestrator and initramfs tiers). Also whether
+   their licences allow shipping them in an image and redistributing a LoRA adapter
+   trained on them.
 2. Whether escalation defaults to a big local model, a cloud API, or a builder box on the
-   LAN when more than one is available.
+   LAN when more than one is available. 8 GB makes local escalation to a 7B genuinely
+   viable on the floor target, which it wasn't at 4 GB.
 3. How much of the parts library ships in v1. This decides whether a board can build
    anything useful offline.
 4. What's in the frozen general-capability eval set, and who owns it. It's the only thing
