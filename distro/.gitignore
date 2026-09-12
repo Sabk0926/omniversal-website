@@ -1,0 +1,18 @@
+# Rust
+/runtime/target/
+**/*.rs.bk
+
+# Kernel module build artefacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.symvers
+*.order
+.tmp_versions/
+/kernel/bpf/vmlinux.h
+/kernel/bpf/*.bpf.o
+
+# Image builds
+/build/
+/work/
