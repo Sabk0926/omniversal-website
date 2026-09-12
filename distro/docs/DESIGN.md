@@ -85,7 +85,7 @@ box. That's the main practical gain over 4 GB.
 | 1 | Kernel notices, userspace reasons | No floating point in ring 0, no forked kernel, keeps stock Ubuntu kernel updates and Secure Boot |
 | 2 | 8 GB ARM64 board is the floor | If it doesn't work there it isn't in the design. Buys a 3-4B orchestrator and enough headroom to load a 7B transiently |
 | 3 | One deb source, two image builders | amd64 ISO for desktops, arm64 `.img` for boards, one rootfs recipe |
-| 4 | Full autonomy, but only as far as things can be undone | See decision 15 for where that line falls |
+| 4 | Autonomy as far as things can be undone, and set per profile | See decision 15 for the reversibility line, and 16 for why `server` defaults lower |
 | 5 | Rust userspace, C for module and BPF | Shell integration pays interpreter startup per keypress (~250ms on a Pi vs ~2ms). CPython is 55 MB in the initramfs vs ~3 MB. Python also can't read BPF ringbufs without a C shim |
 | 6 | Build from parts *and* escalate to a big model | Composing tested parts is verifiable; generating a critical daemon from scratch isn't, at any model size. Escalation covers what parts can't express |
 | 7 | Generated code declares its permissions up front | Renders into systemd hardening plus seccomp. Reuses a mature sandbox instead of writing one |
@@ -97,6 +97,111 @@ box. That's the main practical gain over 4 GB.
 | 13 | Learn in capabilities first, weights last | Capabilities can be inspected, reverted and deleted. Weights can't |
 | 14 | Adapters train on a builder box, not on the board | 8 GB still can't train. Training data is structure, not file contents |
 | 15 | Curated driver sources act alone; arbitrary repos don't | A backdoored driver that ran as the kernel isn't undone by uninstalling it |
+| 16 | One machine profile sets autonomy, latency and model tier together | Three orthogonal knobs is a matrix nobody configures correctly |
+| 17 | `server` defaults to propose-only | Ubuntu's biggest install base is multi-tenant production. The risky default shouldn't be the one that ships there |
+| 18 | The builder is a role, not separate software | Keeps "one deb source" true. Any machine with the hardware can be one, and none is required |
+
+## Machine profiles
+
+All Ubuntu use cases are in scope: desktop, server, container host, cloud instance,
+appliance, board. Role, latency class and autonomy level were accumulating as separate
+settings, so they collapse into one declared profile with individual overrides.
+
+| Profile | Autonomy | Latency | Resident model |
+|---|---|---|---|
+| `workstation` | full | interactive | orchestrator + 7B on demand |
+| `appliance` | full | standard | orchestrator |
+| `controller` | full, capped to reflexes | realtime | none |
+| `server` | **propose-only by default** | standard | orchestrator |
+| `builder` | full | standard | large model + trainer |
+
+Profile is declared at image build or first boot, and it's a hard contract: a `controller`
+refuses to load a resident model even when RAM allows.
+
+`server` defaulting to propose-only matters. An autonomous root daemon restarting a
+500-user database is a different proposition from an appliance in a cabinet. It does the
+full analysis and writes the exact fix, then queues it. An operator raises the level per
+host.
+
+Two consequences:
+
+- **Containers get no autonomy, correctly.** No `/dev/omnia`, no BPF, no guard — and the
+  rule is no floor, no autonomy. Containerised Omnia is capability-building only.
+- **Ephemeral nodes propagate capabilities upward.** A cloud instance that builds
+  something and then terminates has wasted the work, so results push to the builder's
+  registry rather than staying local.
+
+### Latency classes
+
+Fast response and reasoning are different paths, and the model isn't in the fast one.
+Capabilities already are the reflex layer: the forge emits a `.deb` with a systemd unit
+that runs at machine speed. The model reasons once, ahead of time, and emits something
+that runs without it. "Thermal event, throttle in 50 ms" is not a model call; it's a
+reflex the model wrote last week.
+
+| Class | Needs | Reflex coverage | Reasoning |
+|---|---|---|---|
+| realtime | sub-10ms guaranteed | 100% of the hot path | remote only |
+| responsive | sub-second | common cases | local seconds, or remote |
+| standard | seconds | thermal, power, link | local |
+| interactive | fast enough for a human | few needed | local + escalation |
+
+Reflexes become a first-class capability kind. A capability declares itself a reflex
+(bounded latency, no model, no network, no allocation in the hot path) or a deliberation.
+Per decision 9, a reflex's generated test must include a **worst-case latency assertion
+measured under load** before it can be installed.
+
+CPU isolation is enforced in the kernel floor: the guard denies the daemon
+`sched_setaffinity` onto isolated cores, so the model can't steal CPU from a control loop.
+Same principle as the rest of the floor.
+
+### GPU: never required, sometimes wanted
+
+Token generation is memory-bandwidth-bound (Pi 5 roughly 5 tok/s at 3-4B q4, Orin Nano
+roughly 25). But this workload is long-context and short-output — a few thousand tokens of
+journal and device state in, a short plan out — so it's **prefill**-dominated, which is
+compute-bound, which is what GPUs and NPUs actually accelerate.
+
+The no-GPU mitigation is **KV cache reuse**, and it's the highest-leverage optimisation in
+the design. Most system context is static: OS release, hardware, installed packages,
+baselines. Cache that prefix, prefill only what changed, and a 3k-token prefill becomes a
+few hundred. Must be in the model layer from the start.
+
+## The builder
+
+Not separate software. An Omnia machine running the `builder` profile — same image, same
+source, one flag. Three jobs, each impossible on a small node:
+
+| Job | Why not on a node |
+|---|---|
+| Escalation target running a 7B-30B+ | No headroom for a big model plus the node's own work |
+| Building and signing `.deb`s for other arches and kernels | Cross-building and key custody want a real machine |
+| Training LoRA adapters from verified examples | Needs 16-24 GB VRAM |
+
+**It is not required.** Without one: nodes compose from parts entirely offline, nodes with
+headroom escalate to their own transient 7B, nodes with neither queue or use cloud if
+enabled. The only loss is adapter training. A single laptop is a complete system.
+
+Found by mDNS (`_omnia-builder._tcp`) or explicit config, but discovery is only a hint.
+Trust comes from a pinned signing key, never from who answered the broadcast.
+
+**It is a supplier, not a controller.** It produces packages every node installs, making it
+the highest-value target in a fleet, so nodes stay sovereign:
+
+- It signs; nodes verify against a pinned key.
+- Nodes still run each capability's own test before keeping it. The builder does not get
+  to skip step 4. A compromised builder can ship bad code; it cannot ship code that passes
+  a test it does not control on a machine it does not own.
+- The declared permission manifest and sandbox are unchanged.
+- It never holds root on a node. It hands over packages; nodes decide.
+
+Data flowing to it follows the existing rule — structure, not content: intent, plan, parts
+used, test result, redacted corrections, and device descriptors for build requests. Not
+user files.
+
+Ships as `omnia-role-builder`, pulling in the large model, training toolchain, apt repo
+server and signing setup. No new crates: the same `omnia-forge` and `omnia-learn`,
+configured to accept work from peers.
 
 ## The driver ladder
 
