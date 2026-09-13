@@ -100,6 +100,9 @@ box. That's the main practical gain over 4 GB.
 | 16 | One machine profile sets autonomy, latency and model tier together | Three orthogonal knobs is a matrix nobody configures correctly |
 | 17 | `server` defaults to propose-only | Ubuntu's biggest install base is multi-tenant production. The risky default shouldn't be the one that ships there |
 | 18 | The builder is a role, not separate software | Keeps "one deb source" true. Any machine with the hardware can be one, and none is required |
+| 19 | `realtime` nodes keep a resident model where the hardware can isolate it | Affinity alone doesn't stop bandwidth and cache contention, but AMP, MPAM/RDT and NPUs do. The node proves its own timing rather than trusting a spec sheet |
+| 20 | Natural language lives in `command_not_found_handle`, interactive shells only | Real commands resolve first and are never touched. A typo in a script must still fail loudly |
+| 21 | One inbox, three renderers | Terminal, push to existing tools, then web UI. Same data model. The web UI goes last because it is an authenticated network surface on a box running an autonomous root daemon |
 
 ## Machine profiles
 
@@ -111,12 +114,15 @@ settings, so they collapse into one declared profile with individual overrides.
 |---|---|---|---|
 | `workstation` | full | interactive | orchestrator + 7B on demand |
 | `appliance` | full | standard | orchestrator |
-| `controller` | full, capped to reflexes | realtime | none |
+| `realtime` | full, capped to reflexes | realtime | **orchestrator, isolation-gated** |
 | `server` | **propose-only by default** | standard | orchestrator |
 | `builder` | full | standard | large model + trainer |
 
-Profile is declared at image build or first boot, and it's a hard contract: a `controller`
-refuses to load a resident model even when RAM allows.
+Profile is declared at image build or first boot, and it's a hard contract.
+
+`realtime` was called `controller` in earlier drafts. That name collides with Kubernetes,
+where a controller is a reconciliation loop in the control plane, and k8s nodes are a large
+part of Ubuntu's server base.
 
 `server` defaulting to propose-only matters. An autonomous root daemon restarting a
 500-user database is a different proposition from an appliance in a cabinet. It does the
@@ -131,6 +137,32 @@ Two consequences:
   something and then terminates has wasted the work, so results push to the builder's
   registry rather than staying local.
 
+### A realtime node keeps its own model
+
+An earlier draft said RT nodes run no model at all. That was wrong. CPU affinity alone
+does not stop a resident model disturbing a control loop, because inference saturates
+memory bandwidth and evicts the last-level cache, both shared across cores. But affinity
+is not the only tool available.
+
+| Isolation available | How the loop is protected | Resident model |
+|---|---|---|
+| **AMP** — application cores plus a Cortex-M/R with TCM (i.MX8/93, TI AM62x/AM64x, STM32MP, Zynq UltraScale+) | Loop runs on the M/R core out of tightly-coupled memory and never touches DRAM. Structurally immune to what the A cores do | full orchestrator |
+| **Hardware partitioning** — ARM MPAM (v8.4+) or Intel RDT/CAT/MBA | LLC ways and memory bandwidth partitioned in hardware between core groups | orchestrator, bandwidth-capped |
+| **NPU** — Hailo, RKNN, NVDLA | Inference leaves the CPU cores entirely | orchestrator on the NPU |
+| **None of the above** | `SCHED_DEADLINE` budget, inference only in slack windows between cycles | micro tier only, weaker guarantee |
+
+Inference still runs in userspace per decision 1. "Kernel-resident" here means resident on
+the node and wired into the kernel's event path, not executing in ring 0.
+
+**The gate is measured, never assumed.** Per decision 9 the `realtime` profile carries its
+own retained test: a cyclictest-style latency histogram run *with the model under load*.
+Exceeding the declared p99.9 budget drops the node to the next isolation tier, and to
+micro-only or no model if it must. Re-run after every kernel and model change.
+
+Two gains over the old rule. RT nodes get local reasoning instead of a round trip to a
+peer, and the timing claim becomes something the machine demonstrates rather than something
+the design asserts — so an untested board is handled correctly by default.
+
 ### Latency classes
 
 Fast response and reasoning are different paths, and the model isn't in the fast one.
@@ -141,7 +173,7 @@ reflex the model wrote last week.
 
 | Class | Needs | Reflex coverage | Reasoning |
 |---|---|---|---|
-| realtime | sub-10ms guaranteed | 100% of the hot path | remote only |
+| realtime | sub-10ms guaranteed | 100% of the hot path | local when isolation allows, else remote |
 | responsive | sub-second | common cases | local seconds, or remote |
 | standard | seconds | thermal, power, link | local |
 | interactive | fast enough for a human | few needed | local + escalation |
@@ -166,6 +198,86 @@ The no-GPU mitigation is **KV cache reuse**, and it's the highest-leverage optim
 the design. Most system context is static: OS release, hardware, installed packages,
 baselines. Cache that prefix, prefill only what changed, and a 3k-token prefill becomes a
 few hundred. Must be in the model layer from the start.
+
+## How users interact
+
+The thesis says you never need to know a command, but `omni ask` is a command. The honest
+version is narrower: you never need to know the four hundred commands Linux otherwise
+demands — `tar`, `systemctl`, `iptables`, `lvm`, `rsync`, `dd` — or their flags. `omni` is
+an escape hatch, an inspection tool, and something scripts call. It is not the front door.
+
+Two halves. Most designs build only the first. The second matters more here, because the
+system acts on its own: an OS that changes your machine at 03:00 with no good way to say
+what it changed is a liability.
+
+### You to the OS
+
+| Where | How |
+|---|---|
+| A shell | Type it. Unrecognised input becomes intent |
+| Desktop | Super+Space |
+| File manager | Right-click, describe the outcome |
+| SSH | Identical shell behaviour |
+| A script | `omni` with arguments, JSON out |
+
+**Real commands are never affected.** Intent lives in `command_not_found_handle`, the last
+thing the shell tries:
+
+| Order | Shell tries | `ls -al` |
+|---|---|---|
+| 1 | Syntax, pipes, redirects, `if`/`for` | — |
+| 2 | Aliases | — |
+| 3 | Shell functions | — |
+| 4 | Builtins | — |
+| 5 | `$PATH` lookup | **resolves, runs** |
+| 6 | `command_not_found_handle` — intent | never reached |
+
+So `ls -al` runs with zero added latency and no model involvement, as do aliases, dotfiles
+and every existing workflow. `ls -zzz` also resolves; `ls` prints its own error, which is
+correct.
+
+The one real edge case is a mistyped command *name* (`sl` for `ls`). Three rules:
+
+- A single token within edit distance 1-2 of a real command gets "did you mean `ls`?",
+  never an intent.
+- Intent must look like language: several words, no leading dash, not a bare path.
+- Anything ambiguous prints the normal "command not found" and offers rather than acts.
+
+**Non-interactive shells never do this.** A build script that silently invoked a model
+instead of failing on a typo would be a disaster.
+
+### The OS to you
+
+All three surfaces are required. They share one queue of events, actions taken and pending
+proposals, which is what makes three surfaces affordable rather than three products.
+
+```
+$ omni
+3 things happened · 1 needs you
+
+  did     reclaimed 4.2 GB from journald and the apt cache      2h ago
+  did     restarted nginx after it failed its own health check  5h ago
+  built   backup-pictures 1.0.1 — rebuilt for kernel 6.14       1d ago
+
+  needs you
+  → vendor driver for 0bda:8153 found. built, tested, passes.
+      omni show 4      omni approve 4
+```
+
+1. **Inbox** — `omni` with no arguments, as above.
+2. **Push to existing tools** — the same queue to syslog, Prometheus, email, Slack and
+   webhooks, approvals returning the same way. This is what makes `server` propose-only
+   usable at scale; nobody will SSH into 400 hosts to read an inbox.
+3. **Local web UI** — batch approval and, later, the fleet view.
+
+Built in that order. The inbox is the data model and the other two render it. The web UI is
+last on purpose: an authenticated network surface on a machine running an autonomous root
+daemon is the highest-risk component in the design, and it should not exist before the
+queue it renders is stable.
+
+A third requirement falls out of the capability model: **users must be able to see what the
+machine can now do.** `omni capabilities` lists what it has taught itself, with provenance
+for each. Needed as soon as the count passes about five.
 
 ## The builder
 

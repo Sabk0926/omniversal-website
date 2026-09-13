@@ -41,6 +41,41 @@ A custom registry would mean rewriting packaging, worse.
 
 Step 4 is what makes "the OS built itself a backup" reassuring rather than alarming.
 
+## How you use it
+
+Type what you want, wherever you already are. Real commands are untouched — intent only
+fires when the input isn't a command:
+
+```
+$ ls -al                            # real command, runs, nothing added
+$ git push                          # real command, runs
+$ back up my photos every night     # not a command → intent
+$ sl                                # typo → "did you mean ls?"
+```
+
+Also Super+Space on a desktop, right-click in the file manager, and the same behaviour over
+SSH. Scripts are never affected: the handler arms only in interactive shells, so a typo in
+a build script still fails the way it should.
+
+Going the other way, `omni` with no arguments is the inbox — what it did, what it built,
+what needs a decision:
+
+```
+$ omni
+3 things happened · 1 needs you
+
+  did     reclaimed 4.2 GB from journald and the apt cache      2h ago
+  did     restarted nginx after it failed its own health check  5h ago
+  built   backup-pictures 1.0.1 — rebuilt for kernel 6.14       1d ago
+
+  needs you
+  → vendor driver for 0bda:8153 found. built, tested, passes.
+      omni show 4      omni approve 4
+```
+
+The same queue pushes to syslog, Prometheus, email, Slack or a webhook, so an ops team
+never has to log in to see it.
+
 ## It fixes itself
 
 One rule: **nothing audits itself.** Capabilities are checked by the daemon, the daemon by
