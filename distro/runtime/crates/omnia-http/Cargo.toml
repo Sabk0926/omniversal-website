@@ -5,5 +5,8 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+# No dependencies on purpose. This only ever talks to a loopback llama.cpp
+# server, so there is no TLS and no need for an async runtime; pulling in
+# reqwest + tokio + rustls for that would add megabytes to a binary that ships
+# in an initramfs.
 [dependencies]
-
