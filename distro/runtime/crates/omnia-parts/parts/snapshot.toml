@@ -1,0 +1,28 @@
+name = "snapshot"
+summary = "Copy a directory tree to a destination, preserving permissions and times."
+version = "1.0"
+
+[[param]]
+name = "source"
+type = "path"
+required = true
+doc = "Directory to copy from."
+
+[[param]]
+name = "destination"
+type = "path"
+required = true
+doc = "Directory to copy to. Created if missing."
+
+# Permissions are DERIVED from these templates and the caller's arguments.
+# The model never declares what a capability may touch; it only chooses parts
+# and arguments, and the reach of each part is fixed here by a human.
+[permissions]
+read_paths = ["{source}"]
+write_paths = ["{destination}"]
+network = false
+
+# argv, never a shell string. Arguments are substituted as whole elements, so
+# there is no shell to inject into.
+[exec]
+argv = ["rsync", "--archive", "--delete", "{source}/", "{destination}/"]

@@ -1,0 +1,26 @@
+name = "verify-restore"
+summary = "Prove a backup can be restored by restoring a file and comparing it byte for byte."
+version = "1.0"
+
+[[param]]
+name = "archive"
+type = "path"
+required = true
+doc = "The backup to verify."
+
+[[param]]
+name = "original"
+type = "path"
+required = true
+doc = "The source tree the backup was taken from."
+
+[permissions]
+read_paths = ["{archive}", "{original}"]
+write_paths = []
+network = false
+
+# This is the part that makes a backup capability provable rather than
+# plausible. "The backup ran" and "the backup can be restored" are different
+# claims, and only the second is worth keeping.
+[exec]
+argv = ["omnia-verify-restore", "--archive", "{archive}", "--original", "{original}"]
