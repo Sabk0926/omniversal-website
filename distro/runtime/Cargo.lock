@@ -103,6 +103,12 @@ dependencies = [
 [[package]]
 name = "omnia-registry"
 version = "0.1.0"
+dependencies = [
+ "omnia-core",
+ "omnia-parts",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "omnia-sandbox"

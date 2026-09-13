@@ -1,10 +1,10 @@
 //! Part manifests: what a part takes, what it may touch, what it runs.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{PartsError, Result};
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ParamType {
     /// A filesystem path. Validated hard -- see `ParamType::validate`.
@@ -33,7 +33,7 @@ pub struct Param {
     pub values: Vec<String>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Permissions {
     #[serde(default)]
     pub read_paths: Vec<String>,
@@ -43,7 +43,7 @@ pub struct Permissions {
     pub network: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ExecKind {
     /// Runs as a command.

@@ -7,7 +7,7 @@
 
 use std::collections::BTreeMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::catalog::Catalog;
 use crate::manifest::{substitute, ExecKind, Permissions};
@@ -36,7 +36,7 @@ impl Composition {
 }
 
 /// One step after checking, with its reach computed.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ResolvedStep {
     pub part: String,
     pub kind: ExecKind,
