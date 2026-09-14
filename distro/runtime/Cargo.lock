@@ -113,6 +113,10 @@ dependencies = [
 [[package]]
 name = "omnia-sandbox"
 version = "0.1.0"
+dependencies = [
+ "omnia-core",
+ "omnia-parts",
+]
 
 [[package]]
 name = "omniad"
