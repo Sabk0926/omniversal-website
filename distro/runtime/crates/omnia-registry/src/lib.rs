@@ -32,7 +32,7 @@
 mod record;
 mod time;
 
-pub use record::{Capability, Provenance, TestOutcome};
+pub use record::{fingerprint as fingerprint_of, Capability, Provenance, TestOutcome};
 pub use time::{format_utc, now_epoch_seconds};
 
 use std::collections::BTreeMap;

@@ -2,6 +2,9 @@ name = "verify-restore"
 summary = "Prove a backup can be restored by restoring a file and comparing it byte for byte."
 version = "1.0"
 
+# cmp is coreutils: present everywhere, including minimal images.
+requires = ["cmp"]
+
 [[param]]
 name = "archive"
 type = "path"
@@ -24,3 +27,5 @@ network = false
 # claims, and only the second is worth keeping.
 [exec]
 argv = ["omnia-verify-restore", "--archive", "{archive}", "--original", "{original}"]
+# The proof runs through omnia-verify-restore rather than a bare cmp so that
+# "the copy exists" can never be mistaken for "a file restores byte for byte".

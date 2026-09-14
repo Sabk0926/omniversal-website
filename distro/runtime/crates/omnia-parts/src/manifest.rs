@@ -69,6 +69,11 @@ pub struct Part {
     pub version: String,
     #[serde(default, rename = "param")]
     pub params: Vec<Param>,
+    /// Binaries that must exist for this part to run. Checked before a plan is
+    /// accepted, so a capability that could not run is refused at build time
+    /// rather than failing on its first scheduled run at 03:00.
+    #[serde(default)]
+    pub requires: Vec<String>,
     #[serde(default)]
     pub permissions: Permissions,
     pub exec: Exec,

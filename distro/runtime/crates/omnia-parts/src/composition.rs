@@ -164,10 +164,10 @@ mod tests {
         assert_eq!(
             steps[0].argv,
             vec![
-                "rsync",
+                "cp",
                 "--archive",
-                "--delete",
-                "~/Pictures/",
+                "--force",
+                "~/Pictures/.",
                 "/var/backups/pictures/"
             ]
         );
