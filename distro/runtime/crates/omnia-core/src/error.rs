@@ -26,6 +26,13 @@ pub enum Error {
         capability: String,
         requested: String,
     },
+    /// No plan survived validation, so nothing was built. Distinct from
+    /// `ProofFailed`: there, something was built and failed its own test; here
+    /// nothing ever got far enough to be tested.
+    Refused {
+        intent: String,
+        attempts: Vec<String>,
+    },
     /// Underlying I/O.
     Io {
         context: String,
@@ -42,6 +49,7 @@ impl Error {
             Error::NoModel { .. } => 4,
             Error::ProofFailed { .. } => 6,
             Error::PermissionRefused { .. } => 7,
+            Error::Refused { .. } => 8,
             Error::Io { .. } => 1,
         }
     }
@@ -95,6 +103,19 @@ impl fmt::Display for Error {
                 f,
                 "'{capability}' asked for access the sandbox refuses: {requested}"
             ),
+            Error::Refused { intent, attempts } => {
+                write!(f, "nothing was built for \"{intent}\"")?;
+                if attempts.is_empty() {
+                    return write!(f, "\n  no plan was produced at all");
+                }
+                // Every rejection, in order. After a refusal the useful
+                // question is what it kept getting wrong, and only the
+                // sequence answers that.
+                for (index, attempt) in attempts.iter().enumerate() {
+                    write!(f, "\n  attempt {}: {attempt}", index + 1)?;
+                }
+                Ok(())
+            }
             Error::Io { context, source } => write!(f, "{context}: {source}"),
         }
     }
@@ -110,3 +131,71 @@ impl std::error::Error for Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn exit_codes_are_distinct() {
+        // The shell integration branches on these. Two errors sharing a code
+        // would make a branch silently wrong rather than loudly broken.
+        let codes = [
+            Error::config("x").exit_code(),
+            Error::NoModel {
+                tier: "x".into(),
+                hint: String::new(),
+            }
+            .exit_code(),
+            Error::BackendUnavailable {
+                message: String::new(),
+            }
+            .exit_code(),
+            Error::ProofFailed {
+                capability: "x".into(),
+                reason: String::new(),
+            }
+            .exit_code(),
+            Error::PermissionRefused {
+                capability: "x".into(),
+                requested: String::new(),
+            }
+            .exit_code(),
+            Error::Refused {
+                intent: "x".into(),
+                attempts: Vec::new(),
+            }
+            .exit_code(),
+        ];
+        let mut sorted = codes.to_vec();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(sorted.len(), codes.len(), "codes collide: {codes:?}");
+        assert!(!sorted.contains(&0), "no error may exit successfully");
+    }
+
+    #[test]
+    fn a_refusal_lists_every_attempt_in_order() {
+        let text = Error::Refused {
+            intent: "back up my photos".into(),
+            attempts: vec!["no part called 'archive'".into(), "missing 'source'".into()],
+        }
+        .to_string();
+        assert!(text.contains("back up my photos"));
+        assert!(
+            text.contains("attempt 1: no part called 'archive'"),
+            "{text}"
+        );
+        assert!(text.contains("attempt 2: missing 'source'"), "{text}");
+    }
+
+    #[test]
+    fn a_refusal_with_no_attempts_still_says_something_useful() {
+        let text = Error::Refused {
+            intent: "x".into(),
+            attempts: Vec::new(),
+        }
+        .to_string();
+        assert!(text.contains("no plan was produced"), "{text}");
+    }
+}

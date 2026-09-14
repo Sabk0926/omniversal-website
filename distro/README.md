@@ -125,12 +125,32 @@ Alpha, in design. See [docs/DESIGN.md](docs/DESIGN.md).
 
 | Part | State |
 |---|---|
-| `kernel/omnia-kmod/` — char device, event ring, executor claim, watchdog | written, ~470 lines C |
-| `kernel/bpf/` — probes + BPF-LSM floor | written, ~470 lines C |
-| `runtime/` — Rust workspace, 15 crates | stubs, builds clean |
+| `kernel/omnia-kmod/` — char device, event ring, executor claim, watchdog | written, ~470 lines C, never compiled |
+| `kernel/bpf/` — probes + BPF-LSM floor | written, ~470 lines C, never compiled |
+| `runtime/` — Rust workspace, 15 crates | 8 done, 170 tests. The five-step pipeline runs end to end |
 | `images/` — amd64 ISO + arm64 flashable | not started |
 
-Nothing boots yet. The kernel layer is the part that's real.
+Nothing boots yet, and no real model has planned anything yet. What does work, on any
+Ubuntu box: asking for a backup builds one, proves a file restores byte-for-byte, packages
+it, and installs it.
+
+```
+$ omni ask "back up my photos every night" --planner=stub
+built backup-pictures 1.0.0
+
+    proves      a file written to the source is restored from the copy byte for byte
+    reaches     reads ~/Pictures · writes /var/backups/pictures · no network
+    package     /var/lib/omnia/build/omnia-cap-backup-pictures_1.0.0_all.deb
+
+installed. The machine has this now.
+```
+
+`--planner=stub` is why that runs without a model: a real, selectable planner that only
+understands backup requests. Everything it produces goes through the same validation,
+sandboxing, proving and packaging as a model-planned capability, so the pipeline can be
+tested without the model and a failure points at one or the other.
+
+Next: the driver ladder, then the autonomous daemon and the shell integration.
 
 ## Targets
 
