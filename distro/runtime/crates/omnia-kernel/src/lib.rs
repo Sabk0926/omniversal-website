@@ -16,8 +16,10 @@
 
 pub mod device;
 pub mod modalias;
+pub mod modules;
 pub mod uevent;
 
 pub use device::{enumerate, unclaimed, Device};
 pub use modalias::{Expectation, Modalias};
+pub use modules::{Lookup, ModuleIndex};
 pub use uevent::{Action, Uevent};

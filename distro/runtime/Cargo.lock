@@ -79,6 +79,7 @@ name = "omnia-forge"
 version = "0.1.0"
 dependencies = [
  "omnia-core",
+ "omnia-kernel",
  "omnia-model",
  "omnia-parts",
  "omnia-registry",
