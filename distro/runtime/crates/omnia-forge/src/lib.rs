@@ -6,10 +6,12 @@
 
 #![forbid(unsafe_op_in_unsafe_fn)]
 
+pub mod ladder;
 mod package;
 mod planner;
 mod prove;
 
+pub use ladder::{Climb, Declaration, Ladder, Rung, Step, System};
 pub use package::{PackageError, PackageSpec};
 pub use planner::{ModelPlanner, Planner, StubPlanner};
 pub use prove::{prove, Proof, Scratch};

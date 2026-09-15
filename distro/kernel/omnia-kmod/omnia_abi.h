@@ -2,11 +2,12 @@
 /*
  * Omnia OS kernel ABI.
  *
- * Shared verbatim between the kernel module, the BPF programs and the Python
- * userspace client (src/omnia/kernel/abi.py). `make check` parses this header
- * and asserts the Python struct definitions still match it -- a silent ABI
- * skew between a DKMS module and a package upgrade is the exact bug class this
- * file exists to make impossible.
+ * Shared verbatim between the kernel module, the BPF programs and the userspace
+ * client (runtime/crates/omnia-abi). `cargo test -p omnia-abi` re-parses this
+ * header and asserts the Rust definitions still match it, field by field and
+ * ioctl by ioctl -- a silent ABI skew between a DKMS module built on the user's
+ * machine and a userspace package built months earlier is the exact bug class
+ * this file exists to make impossible.
  *
  * Compatibility rule: fields are only ever appended, never reordered or
  * resized, and OMNIA_ABI_VERSION is bumped when they are. Userspace refuses to
