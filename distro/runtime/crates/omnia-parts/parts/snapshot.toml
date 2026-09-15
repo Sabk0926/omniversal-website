@@ -1,0 +1,35 @@
+name = "snapshot"
+summary = "Copy a directory tree to a destination, preserving permissions and times. Additive: files deleted from the source stay in the copy."
+version = "1.0"
+
+# Binaries this part needs. Checked before a plan is accepted, so a capability
+# that could not run is refused at build time rather than failing at 03:00.
+# coreutils is present on every Ubuntu install including minimal images and
+# containers; rsync is not, which is why this is cp.
+requires = ["cp"]
+
+[[param]]
+name = "source"
+type = "path"
+required = true
+doc = "Directory to copy from."
+
+[[param]]
+name = "destination"
+type = "path"
+required = true
+doc = "Directory to copy to. Created if missing."
+
+# Permissions are DERIVED from these templates and the caller's arguments.
+# The model never declares what a capability may touch; it only chooses parts
+# and arguments, and the reach of each part is fixed here by a human.
+[permissions]
+read_paths = ["{source}"]
+write_paths = ["{destination}"]
+network = false
+
+# argv, never a shell string. Arguments are substituted as whole elements, so
+# there is no shell to inject into. "{source}/." copies the contents rather
+# than nesting the directory inside itself on a second run.
+[exec]
+argv = ["cp", "--archive", "--force", "{source}/.", "{destination}/"]

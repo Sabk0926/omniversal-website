@@ -1,0 +1,6 @@
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]
+# Both image targets. Embedded boards are arm64; desktops are amd64; the same
+# `cargo build --release --target ...` produces both from one source tree.
+targets = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"]

@@ -1,0 +1,14 @@
+[package]
+name = "omni"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+omnia-core.workspace = true
+omnia-forge.workspace = true
+omnia-model.workspace = true
+omnia-parts.workspace = true
+omnia-registry.workspace = true
+serde_json.workspace = true
