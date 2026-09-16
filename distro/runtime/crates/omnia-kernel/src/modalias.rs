@@ -89,10 +89,55 @@ pub struct Pci {
 pub struct Usb {
     pub vendor: u16,
     pub product: u16,
+    /// `bcdDevice`: the device's own revision, not a class field.
+    pub revision: u16,
     pub device_class: u8,
     pub device_subclass: u8,
+    pub device_protocol: u8,
     pub interface_class: u8,
     pub interface_subclass: u8,
+    pub interface_protocol: u8,
+    pub interface_number: u8,
+}
+
+impl Usb {
+    /// Rebuild the alias string exactly as the kernel emits it.
+    ///
+    /// Exact matters: this is fed back through the same glob matcher the
+    /// kernel's own patterns are tested with, so a field of the wrong width
+    /// would quietly fail to match a driver that does claim the device.
+    /// [`Modalias::render`] round-trips against real fixtures to keep it honest.
+    pub fn render(&self) -> String {
+        format!(
+            "usb:v{:04X}p{:04X}d{:04X}dc{:02X}dsc{:02X}dp{:02X}ic{:02X}isc{:02X}ip{:02X}in{:02X}",
+            self.vendor,
+            self.product,
+            self.revision,
+            self.device_class,
+            self.device_subclass,
+            self.device_protocol,
+            self.interface_class,
+            self.interface_subclass,
+            self.interface_protocol,
+            self.interface_number
+        )
+    }
+}
+
+impl Pci {
+    /// Rebuild the alias string exactly as the kernel emits it.
+    pub fn render(&self) -> String {
+        format!(
+            "pci:v{:08X}d{:08X}sv{:08X}sd{:08X}bc{:02X}sc{:02X}i{:02X}",
+            u32::from(self.vendor),
+            u32::from(self.device),
+            u32::from(self.subsystem_vendor),
+            u32::from(self.subsystem_device),
+            self.base_class,
+            self.subclass,
+            self.interface
+        )
+    }
 }
 
 /// Whether a driver is expected here at all.
@@ -147,6 +192,99 @@ impl Modalias {
             Kind::Virtio { vendor, device } => Some(format!("{vendor:04x}:{device:04x}")),
             _ => None,
         }
+    }
+
+    /// Rebuild the alias exactly, for the buses this parser breaks down.
+    ///
+    /// `None` for the rest, which is not a shortcoming: reconstruction only
+    /// exists to support [`Modalias::with_identity`], and a bus whose fields
+    /// are not parsed has no identity to substitute.
+    pub fn render(&self) -> Option<String> {
+        match &self.kind {
+            Kind::Usb(usb) => Some(usb.render()),
+            Kind::Pci(pci) => Some(pci.render()),
+            _ => None,
+        }
+    }
+
+    /// This device's alias, as it would read if the device carried a different
+    /// vendor and product ID.
+    ///
+    /// # What this is for
+    ///
+    /// Rung 3's question is "which driver wants a device exactly like this one,
+    /// and is only held back by the ID?" That is answerable without a model and
+    /// without guessing, using the index the kernel already ships:
+    ///
+    /// For each driver pattern that names a specific vendor and product, put
+    /// *that driver's* IDs onto *this device* and re-run the match. If the
+    /// pattern now matches, the driver's every other requirement — device
+    /// class, interface class, subclass, protocol — is already satisfied by
+    /// this device, and the ID is the only thing standing between them. That
+    /// is precisely the case `new_id` exists for: a rebadged or newer-revision
+    /// device the driver would handle if it had been told about it.
+    ///
+    /// If the pattern still does not match, the driver wants a different kind
+    /// of device and forcing the binding would be a guess.
+    pub fn with_identity(&self, vendor: u32, product: u32) -> Option<Modalias> {
+        let kind = match &self.kind {
+            Kind::Usb(usb) => Kind::Usb(Usb {
+                vendor: vendor as u16,
+                product: product as u16,
+                ..*usb
+            }),
+            Kind::Pci(pci) => Kind::Pci(Pci {
+                vendor: vendor as u16,
+                device: product as u16,
+                ..*pci
+            }),
+            _ => return None,
+        };
+        let raw = match &kind {
+            Kind::Usb(usb) => usb.render(),
+            Kind::Pci(pci) => pci.render(),
+            _ => unreachable!("only usb and pci reach here"),
+        };
+        Some(Modalias { raw, kind })
+    }
+
+    /// This alias with every class field changed, for probing whether a driver
+    /// pattern actually cares what kind of device this is.
+    ///
+    /// Most USB and PCI drivers ship a plain table of vendor/product IDs and
+    /// wildcard every class field, so "does this pattern match once the IDs are
+    /// swapped?" is trivially true for them and proves nothing. Asking the same
+    /// pattern about a device with a *different* class separates the two: a
+    /// pattern that matches both ignores class entirely, and a pattern that
+    /// rejects the variant is genuinely constraining it.
+    ///
+    /// The offsets are arbitrary and only have to change the value; they are
+    /// odd numbers so that a field at 0 and a field at its maximum both move.
+    pub fn with_different_class(&self) -> Option<Modalias> {
+        let kind = match &self.kind {
+            Kind::Usb(usb) => Kind::Usb(Usb {
+                device_class: usb.device_class.wrapping_add(0x55),
+                device_subclass: usb.device_subclass.wrapping_add(0x55),
+                device_protocol: usb.device_protocol.wrapping_add(0x55),
+                interface_class: usb.interface_class.wrapping_add(0x55),
+                interface_subclass: usb.interface_subclass.wrapping_add(0x55),
+                interface_protocol: usb.interface_protocol.wrapping_add(0x55),
+                ..*usb
+            }),
+            Kind::Pci(pci) => Kind::Pci(Pci {
+                base_class: pci.base_class.wrapping_add(0x55),
+                subclass: pci.subclass.wrapping_add(0x55),
+                interface: pci.interface.wrapping_add(0x55),
+                ..*pci
+            }),
+            _ => return None,
+        };
+        let raw = match &kind {
+            Kind::Usb(usb) => usb.render(),
+            Kind::Pci(pci) => pci.render(),
+            _ => unreachable!("only usb and pci reach here"),
+        };
+        Some(Modalias { raw, kind })
     }
 
     /// Is this a device that is unclaimed by design?
@@ -350,10 +488,14 @@ fn parse_usb(rest: &str) -> Option<Usb> {
     Some(Usb {
         vendor: fields[0]? as u16,
         product: fields[1]? as u16,
+        revision: fields[2].unwrap_or(0) as u16,
         device_class: fields[3].unwrap_or(0) as u8,
         device_subclass: fields[4].unwrap_or(0) as u8,
+        device_protocol: fields[5].unwrap_or(0) as u8,
         interface_class: fields[6].unwrap_or(0) as u8,
         interface_subclass: fields[7].unwrap_or(0) as u8,
+        interface_protocol: fields[8].unwrap_or(0) as u8,
+        interface_number: fields[9].unwrap_or(0) as u8,
     })
 }
 
@@ -621,6 +763,77 @@ mod tests {
         };
         assert_eq!(name, "temp_sensor");
         assert_eq!(compatible, vec!["ti,tmp102", "ti,tmp101"]);
+    }
+
+    #[test]
+    fn a_parsed_alias_rebuilds_itself_byte_for_byte() {
+        // Reconstruction feeds back through the same glob matcher the kernel's
+        // own patterns are tested with. A field of the wrong width would
+        // quietly fail to match a driver that does claim the device, so the
+        // round trip is checked against real fixtures rather than assumed.
+        for raw in [USB_ETHERNET, HOST_BRIDGE, VIRTIO_NET, VIRTIO_BLK] {
+            let alias = Modalias::parse(raw);
+            assert_eq!(
+                alias.render().unwrap().to_uppercase(),
+                raw.to_uppercase(),
+                "{raw} did not round-trip"
+            );
+        }
+    }
+
+    #[test]
+    fn a_bus_this_parser_does_not_break_down_renders_nothing() {
+        // Not a shortcoming: reconstruction exists only to support
+        // with_identity, and a bus with no parsed identity has none to swap.
+        assert!(Modalias::parse(RTC).render().is_none());
+        assert!(Modalias::parse(ACPI_CLOCK).render().is_none());
+    }
+
+    #[test]
+    fn swapping_the_identity_changes_only_the_identity() {
+        // The operation rung 3 rests on: everything that describes what kind of
+        // device this is must survive, or the question being asked changes.
+        let original = Modalias::parse(USB_ETHERNET);
+        let swapped = original.with_identity(0x0bda, 0x8155).unwrap();
+
+        assert_eq!(swapped.id_pair().unwrap(), "0bda:8155");
+        let (Kind::Usb(before), Kind::Usb(after)) = (&original.kind, &swapped.kind) else {
+            panic!()
+        };
+        assert_eq!(after.interface_class, before.interface_class);
+        assert_eq!(after.interface_subclass, before.interface_subclass);
+        assert_eq!(after.device_class, before.device_class);
+        assert_eq!(after.revision, before.revision);
+        assert_eq!(after.interface_number, before.interface_number);
+    }
+
+    #[test]
+    fn a_swapped_alias_is_still_a_well_formed_alias() {
+        // It gets handed straight to the glob matcher, so it has to parse back
+        // to the same thing it claims to be.
+        let swapped = Modalias::parse(USB_ETHERNET)
+            .with_identity(0x1234, 0xABCD)
+            .unwrap();
+        assert_eq!(Modalias::parse(&swapped.raw).kind, swapped.kind);
+        assert!(swapped.raw.starts_with("usb:v1234pABCD"), "{}", swapped.raw);
+    }
+
+    #[test]
+    fn a_pci_identity_swap_keeps_the_class_code() {
+        let swapped = Modalias::parse(VIRTIO_NET)
+            .with_identity(0x8086, 0x1000)
+            .unwrap();
+        let Kind::Pci(pci) = swapped.kind else {
+            panic!()
+        };
+        assert_eq!(pci.vendor, 0x8086);
+        assert_eq!(pci.device, 0x1000);
+        assert_eq!(pci.base_class, 0x02, "still a network controller");
+    }
+
+    #[test]
+    fn a_bus_without_numeric_ids_cannot_have_its_identity_swapped() {
+        assert!(Modalias::parse(RTC).with_identity(1, 2).is_none());
     }
 
     #[test]

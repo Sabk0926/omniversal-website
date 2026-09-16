@@ -21,5 +21,5 @@ pub mod uevent;
 
 pub use device::{enumerate, unclaimed, Device};
 pub use modalias::{Expectation, Modalias};
-pub use modules::{Lookup, ModuleIndex};
+pub use modules::{IdCandidate, Lookup, ModuleIndex};
 pub use uevent::{Action, Uevent};

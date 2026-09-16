@@ -68,6 +68,65 @@ impl Lookup {
     }
 }
 
+/// A driver that would take this device if it knew its ID.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IdCandidate {
+    pub module: String,
+    /// A device this driver does claim, as evidence of what it is for.
+    pub claims: String,
+    /// The index line it came from, so the reasoning can be checked by hand.
+    pub pattern: String,
+    /// The driver claims a device from the same manufacturer. The stronger of
+    /// the two reasons a candidate can qualify.
+    pub same_vendor: bool,
+}
+
+impl IdCandidate {
+    pub fn describe(&self) -> String {
+        let why = if self.same_vendor {
+            "the same manufacturer"
+        } else {
+            "the same kind of device"
+        };
+        format!(
+            "{} drives {}, which is {}, and differs from this one only by its ID",
+            self.module, self.claims, why
+        )
+    }
+}
+
+/// The literal vendor and product a pattern names, if it names them.
+///
+/// `usb:v0BDAp8153d*...` yields `(0x0bda, 0x8153)`; `usb:v*p*d*...` yields
+/// `None`, and so does a pattern with a partial wildcard like `v0BD*`. Only a
+/// fully literal identity counts, because a partly-wildcarded one does not name
+/// a device that could be pointed at.
+fn pattern_identity(pattern: &str) -> Option<(u32, u32)> {
+    let rest = pattern
+        .strip_prefix("usb:")
+        .or_else(|| pattern.strip_prefix("pci:"))?;
+    let (first, second) = if pattern.starts_with("usb:") {
+        (("v", 4), ("p", 4))
+    } else {
+        (("v", 8), ("d", 8))
+    };
+    let after_v = rest.strip_prefix(first.0)?;
+    let vendor: String = after_v.chars().take(first.1).collect();
+    if vendor.len() != first.1 || !vendor.chars().all(|c| c.is_ascii_hexdigit()) {
+        return None;
+    }
+    let after_vendor = &after_v[first.1..];
+    let after_p = after_vendor.strip_prefix(second.0)?;
+    let product: String = after_p.chars().take(second.1).collect();
+    if product.len() != second.1 || !product.chars().all(|c| c.is_ascii_hexdigit()) {
+        return None;
+    }
+    Some((
+        u32::from_str_radix(&vendor, 16).ok()?,
+        u32::from_str_radix(&product, 16).ok()?,
+    ))
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct ModuleIndex {
     /// In file order. `modprobe` reports every match, and so does this.
@@ -125,6 +184,86 @@ impl ModuleIndex {
             modules if modules.is_empty() => Lookup::None,
             modules => Lookup::Loadable(modules),
         }
+    }
+
+    /// Drivers that want a device exactly like this one and are only held back
+    /// by its vendor and product ID.
+    ///
+    /// This is rung 3's input, and it is derived rather than guessed. For every
+    /// pattern in the index that names a specific vendor and product, this puts
+    /// *that driver's* IDs onto *this device* and re-runs the match. A pattern
+    /// that then matches has every other requirement already satisfied — device
+    /// class, interface class, subclass, protocol — so the ID is the only thing
+    /// between the driver and the device. That is what `new_id` is for.
+    ///
+    /// Patterns that already match the device are excluded: rung 1 covered
+    /// those, and re-offering them here would loop. Patterns whose identity
+    /// fields are wildcards are excluded too, for the same reason — a driver
+    /// that claims any vendor would have matched already, so if it did not, the
+    /// mismatch is in a class field and no ID will fix it.
+    pub fn id_candidates(&self, alias: &Modalias) -> Vec<IdCandidate> {
+        let Some(rendered) = alias.render() else {
+            return Vec::new();
+        };
+        let our_vendor = match &alias.kind {
+            crate::modalias::Kind::Usb(usb) => u32::from(usb.vendor),
+            crate::modalias::Kind::Pci(pci) => u32::from(pci.vendor),
+            _ => return Vec::new(),
+        };
+        // Whatever rung 1 already found is not a rung 3 candidate, even if some
+        // *other* line in the index points at the same module. A driver that
+        // already claims this device does not need to be told its ID.
+        let already = match self.lookup(alias) {
+            Lookup::Loadable(modules) => modules,
+            Lookup::Builtin(module) => vec![module],
+            Lookup::None => Vec::new(),
+        };
+        let different_class = alias.with_different_class();
+        let mut found: Vec<IdCandidate> = Vec::new();
+
+        for (pattern, module) in self.loadable.iter().chain(self.builtin.iter()) {
+            if already.contains(module) || found.iter().any(|c| c.module == *module) {
+                continue;
+            }
+            if glob_match(pattern, &rendered) {
+                continue; // rung 1 already had this one
+            }
+            let Some((vendor, product)) = pattern_identity(pattern) else {
+                continue; // wildcarded identity: the mismatch is elsewhere
+            };
+            let Some(hypothetical) = alias.with_identity(vendor, product) else {
+                continue;
+            };
+            if !glob_match(pattern, &hypothetical.raw) {
+                continue; // wants a different kind of device entirely
+            }
+
+            // The substitution test alone is not enough. Most drivers ship a
+            // plain ID table and wildcard every class field, so it passes for
+            // any device on the bus -- which would offer an ethernet driver a
+            // USB stick. Two things can rescue it, and one of them must hold:
+            //
+            //   same vendor        the rebadge and new-revision case, which is
+            //                      what new_id is overwhelmingly used for
+            //   constrains class   the pattern actually cares what kind of
+            //                      device this is, and this device qualifies
+            let same_vendor = vendor == our_vendor;
+            let constrains_class = different_class
+                .as_ref()
+                .and_then(|other| other.with_identity(vendor, product))
+                .is_some_and(|probe| !glob_match(pattern, &probe.raw));
+            if !same_vendor && !constrains_class {
+                continue;
+            }
+
+            found.push(IdCandidate {
+                module: module.clone(),
+                claims: format!("{vendor:04x}:{product:04x}"),
+                pattern: pattern.clone(),
+                same_vendor,
+            });
+        }
+        found
     }
 
     fn match_in(&self, table: &[(String, String)], alias: &str) -> Vec<String> {
@@ -420,6 +559,159 @@ alias platform:rtc_cmos rtc_cmos
             Lookup::Loadable(modules) => assert_eq!(modules, vec!["serial8250"]),
             other => panic!("{other:?}"),
         }
+    }
+
+    #[test]
+    fn a_rebadged_device_finds_the_driver_that_wants_it() {
+        // The rung 3 case, with real hardware shapes. Realtek's USB ethernet
+        // presents a vendor-specific interface class (0xFF) rather than CDC,
+        // which is exactly why it needs r8152 and cdc_ether cannot help. The
+        // device here is 0bda:8155 -- a revision the kernel has not been told
+        // about. Nothing claims it, and r8152 would drive it.
+        let unknown = Modalias::parse("usb:v0BDAp8155d3000dcFFdsc00dp00icFFisc00ip00in00");
+        assert_eq!(
+            index().lookup(&unknown),
+            Lookup::None,
+            "rung 1 finds nothing"
+        );
+
+        let candidates = index().id_candidates(&unknown);
+        let modules: Vec<&str> = candidates.iter().map(|c| c.module.as_str()).collect();
+        assert!(modules.contains(&"r8152"), "{candidates:?}");
+        assert!(
+            !modules.contains(&"cdc_ether"),
+            "cdc_ether wants interface class 02/06, this is FF: {candidates:?}"
+        );
+
+        let r8152 = candidates.iter().find(|c| c.module == "r8152").unwrap();
+        assert_eq!(r8152.claims, "0bda:8153", "names the device it does drive");
+        assert!(r8152.same_vendor, "same manufacturer is the strong signal");
+        assert!(r8152.describe().contains("0bda:8153"));
+        assert!(r8152.describe().contains("same manufacturer"));
+    }
+
+    #[test]
+    fn a_pure_id_table_driver_is_not_offered_another_vendors_device() {
+        // The flaw the substitution test alone had. r8152's pattern wildcards
+        // every class field, so "does it match once the IDs are swapped?" is
+        // true for any USB device at all. Without the same-vendor or
+        // constrains-class requirement, this offers an ethernet driver a
+        // completely unrelated device from a different manufacturer.
+        let other = Modalias::parse("usb:v1234p5678d0100dcFFdsc00dp00icFFisc00ip00in00");
+        let modules: Vec<String> = index()
+            .id_candidates(&other)
+            .into_iter()
+            .map(|c| c.module)
+            .collect();
+        assert!(
+            !modules.contains(&"r8152".to_string()),
+            "different vendor, and r8152's pattern constrains no class: {modules:?}"
+        );
+    }
+
+    #[test]
+    fn a_driver_that_wants_a_different_kind_of_device_is_not_offered() {
+        // Same vendor is a strong signal, but not a blank cheque: it still has
+        // to be the kind of device the driver constrains itself to. cdc_ether
+        // names interface class 02/06, and a mass-storage interface is not
+        // that, however the IDs are rearranged.
+        let storage = Modalias::parse("usb:v0BDAp9999d0100dc00dsc00dp00ic08isc06ip50in00");
+        let modules: Vec<String> = index()
+            .id_candidates(&storage)
+            .into_iter()
+            .map(|c| c.module)
+            .collect();
+        assert!(
+            !modules.contains(&"cdc_ether".to_string()),
+            "interface class 08 is storage, not 02/06 ethernet: {modules:?}"
+        );
+    }
+
+    #[test]
+    fn a_device_that_already_has_a_driver_is_not_offered_one_again() {
+        // Rung 1 covered it. Re-offering here would loop.
+        let known = Modalias::parse("usb:v0BDAp8153d0100dc00dsc00dp00ic02isc06ip00in00");
+        assert!(index().lookup(&known).can_load());
+        let modules: Vec<String> = index()
+            .id_candidates(&known)
+            .into_iter()
+            .map(|c| c.module)
+            .collect();
+        assert!(!modules.contains(&"r8152".to_string()), "{modules:?}");
+    }
+
+    #[test]
+    fn a_vendor_agnostic_pattern_is_not_an_id_candidate() {
+        // cdc_ether claims any vendor with the right interface class. If it did
+        // not already match, the mismatch is in a class field and no ID will
+        // fix it, so offering new_id would be pointless.
+        let odd = Modalias::parse("usb:v9999p9999d0100dc00dsc00dp00ic09isc09ip09in00");
+        let modules: Vec<String> = index()
+            .id_candidates(&odd)
+            .into_iter()
+            .map(|c| c.module)
+            .collect();
+        assert!(!modules.contains(&"cdc_ether".to_string()), "{modules:?}");
+    }
+
+    #[test]
+    fn a_bus_without_numeric_ids_yields_no_candidates() {
+        assert!(index()
+            .id_candidates(&Modalias::parse("platform:rtc_cmos"))
+            .is_empty());
+        assert!(index()
+            .id_candidates(&Modalias::parse("acpi:PNP0501:"))
+            .is_empty());
+    }
+
+    #[test]
+    fn a_pattern_identity_is_read_only_when_it_is_fully_literal() {
+        // A partly wildcarded identity does not name a device that could be
+        // pointed at, so it must not be read as one.
+        assert_eq!(
+            pattern_identity("usb:v0BDAp8153d*dc*dsc*dp*ic*isc*ip*in*"),
+            Some((0x0bda, 0x8153))
+        );
+        assert_eq!(
+            pattern_identity("usb:v*p*d*dc*dsc*dp*ic02isc06ip00in*"),
+            None
+        );
+        assert_eq!(
+            pattern_identity("usb:v0BD*p8153d*"),
+            None,
+            "partial wildcard"
+        );
+        assert_eq!(
+            pattern_identity("pci:v00001AF4d00001041sv*sd*bc*sc*i*"),
+            Some((0x1af4, 0x1041))
+        );
+        assert_eq!(pattern_identity("of:N*T*Cti,tmp102*"), None);
+    }
+
+    #[test]
+    fn a_pci_device_can_be_offered_to_a_driver_for_its_sibling() {
+        // Same story on PCI: a card with a new device ID and the same class.
+        let unknown = Modalias::parse("pci:v00001AF4d00009999sv00001AF4sd00009999bc02sc00i00");
+        let candidates = index().id_candidates(&unknown);
+        let modules: Vec<&str> = candidates.iter().map(|c| c.module.as_str()).collect();
+        assert!(modules.contains(&"virtio_net"), "{candidates:?}");
+    }
+
+    #[test]
+    fn candidates_carry_the_index_line_so_the_reasoning_can_be_checked() {
+        // The machine is about to force a binding. Someone has to be able to
+        // see why it thought that was a good idea.
+        let unknown = Modalias::parse("usb:v0BDAp8155d0100dc00dsc00dp00ic02isc06ip00in00");
+        let candidate = index()
+            .id_candidates(&unknown)
+            .into_iter()
+            .find(|c| c.module == "r8152")
+            .unwrap();
+        assert!(
+            candidate.pattern.contains("v0BDAp8153"),
+            "{}",
+            candidate.pattern
+        );
     }
 
     #[test]
