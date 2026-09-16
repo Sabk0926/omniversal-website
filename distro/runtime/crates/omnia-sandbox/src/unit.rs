@@ -104,14 +104,60 @@ impl Unit {
         let _ = writeln!(out, "MemoryDenyWriteExecute=yes");
         let _ = writeln!(out);
 
-        let _ = writeln!(out, "# --- devices and syscalls ---");
-        let _ = writeln!(out, "PrivateDevices=yes");
-        let _ = writeln!(out, "DevicePolicy=closed");
+        let _ = writeln!(out, "# --- devices ---");
+        if self.permissions.devices.is_empty() {
+            // A private /dev with only the standard pseudo-devices. Nothing
+            // this capability does involves hardware.
+            let _ = writeln!(out, "PrivateDevices=yes");
+            let _ = writeln!(out, "DevicePolicy=closed");
+        } else {
+            // PrivateDevices=yes would mount a /dev containing only null, zero,
+            // random and friends -- and the device this driver exists to drive
+            // would simply not be there. The failure is a confusing ENOENT
+            // rather than a permission error, so it is worth saying out loud in
+            // the unit itself.
+            let _ = writeln!(
+                out,
+                "# This capability drives hardware. PrivateDevices=yes would hide"
+            );
+            let _ = writeln!(
+                out,
+                "# the device from its own driver, so /dev is real and the policy"
+            );
+            let _ = writeln!(out, "# below is what narrows it to one node.");
+            let _ = writeln!(out, "PrivateDevices=no");
+            // closed: the standard pseudo-devices plus whatever is allowed
+            // below, and nothing else on the machine.
+            let _ = writeln!(out, "DevicePolicy=closed");
+            for node in &self.permissions.devices {
+                let _ = writeln!(out, "DeviceAllow={node} rw");
+            }
+        }
+        let _ = writeln!(out);
+
+        let _ = writeln!(out, "# --- syscalls ---");
         let _ = writeln!(out, "SystemCallArchitectures=native");
-        // @system-service minus the groups a data-moving job never needs.
+        // Two lines, not one, and this is not a style choice.
+        //
+        // `SystemCallFilter=@system-service ~@privileged ~@module` looks like
+        // it means "allow @system-service, minus those groups". It does not.
+        // systemd parses a leading `~` as making the *whole line* a deny-list,
+        // and a `~` on an individual item is not syntax at all: it logs
+        // "System call ~@privileged is not known, ignoring" and drops it. The
+        // unit then ships with none of the narrowing it appears to declare.
+        //
+        // Nothing in the unit's text shows this. It was found by running the
+        // generated file through `systemd-analyze verify`, which is why that is
+        // now a test.
+        //
+        // The allow-list comes first and the deny-list subtracts from it. ioctl
+        // is inside @system-service and survives both: it is how a userspace
+        // driver talks to usbfs and to an I2C bus, and losing it would leave a
+        // driver that can open its device and do nothing with it.
+        let _ = writeln!(out, "SystemCallFilter=@system-service");
         let _ = writeln!(
             out,
-            "SystemCallFilter=@system-service ~@privileged ~@resources ~@mount ~@debug ~@module"
+            "SystemCallFilter=~@privileged @resources @mount @debug @module"
         );
         let _ = writeln!(out, "SystemCallErrorNumber=EPERM");
 
@@ -205,6 +251,228 @@ fn quote_argv(argv: &[String]) -> String {
 }
 
 #[cfg(test)]
+mod systemd_tests {
+    use super::*;
+
+    /// Run a rendered unit through systemd's own parser.
+    ///
+    /// Asserting on substrings proves the text is there, not that systemd
+    /// understands it. The SystemCallFilter syntax bug this test was written
+    /// for passed every substring assertion in this file while systemd silently
+    /// discarded five deny-groups — the unit shipped without the narrowing it
+    /// appeared to declare, and nothing in the file showed it.
+    ///
+    /// Returns systemd's complaints, minus the ones that are about this
+    /// container rather than the unit. Skipped where systemd-analyze is absent.
+    fn complaints(unit: &str) -> Option<Vec<String>> {
+        let probe = std::process::Command::new("systemd-analyze")
+            .arg("--version")
+            .output()
+            .ok()?;
+        if !probe.status.success() {
+            return None;
+        }
+
+        let dir = std::env::temp_dir().join(format!(
+            "omnia-unit-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos())
+                .unwrap_or(0)
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("omnia-test.service");
+        std::fs::write(&path, unit).unwrap();
+
+        let output = std::process::Command::new("systemd-analyze")
+            .arg("verify")
+            .arg(&path)
+            .output()
+            .expect("systemd-analyze runs");
+        let _ = std::fs::remove_dir_all(&dir);
+
+        Some(
+            String::from_utf8_lossy(&output.stderr)
+                .lines()
+                .filter(|line| !line.trim().is_empty())
+                // The binary genuinely is not installed here; that is the
+                // container's problem, not the unit's.
+                .filter(|line| !line.contains("is not executable"))
+                .map(str::to_string)
+                .collect(),
+        )
+    }
+
+    fn unit_with(devices: &[&str], network: bool) -> String {
+        Unit {
+            name: "omnia-cap-test".into(),
+            description: "A generated capability".into(),
+            kind: UnitKind::OneShot,
+            argv: vec!["/usr/bin/true".into()],
+            permissions: Permissions {
+                read_paths: vec!["/home/sam/Pictures".into()],
+                write_paths: vec!["/var/backups/pictures".into()],
+                devices: devices.iter().map(|d| (*d).to_string()).collect(),
+                network,
+            },
+        }
+        .render_service()
+    }
+
+    #[test]
+    fn systemd_understands_every_directive_in_a_generated_unit() {
+        let Some(complaints) = complaints(&unit_with(&[], false)) else {
+            return;
+        };
+        assert!(
+            complaints.is_empty(),
+            "systemd does not understand the generated unit:\n{}",
+            complaints.join("\n")
+        );
+    }
+
+    #[test]
+    fn systemd_understands_a_driver_unit_too() {
+        // DeviceAllow is exactly the kind of directive that is accepted as text
+        // and dropped as policy if its argument is malformed.
+        let Some(complaints) = complaints(&unit_with(&["/dev/bus/usb/001/004"], false)) else {
+            return;
+        };
+        assert!(
+            complaints.is_empty(),
+            "systemd does not understand the driver unit:\n{}",
+            complaints.join("\n")
+        );
+    }
+
+    #[test]
+    fn no_syscall_group_is_silently_discarded() {
+        // The specific failure: "System call ~@privileged is not known,
+        // ignoring". It is a warning, so the unit still loads, and the only
+        // symptom is that the sandbox is weaker than the file says.
+        let Some(complaints) = complaints(&unit_with(&[], true)) else {
+            return;
+        };
+        let discarded: Vec<&String> = complaints
+            .iter()
+            .filter(|line| line.contains("is not known"))
+            .collect();
+        assert!(
+            discarded.is_empty(),
+            "systemd is discarding part of the sandbox:\n{discarded:?}"
+        );
+    }
+}
+
+#[cfg(test)]
+mod device_tests {
+    use super::*;
+
+    fn driver_unit(devices: &[&str]) -> String {
+        Unit {
+            name: "omnia-cap-driver-1234-5678".into(),
+            description: "Drive 1234:5678".into(),
+            kind: UnitKind::OneShot,
+            argv: vec!["/usr/lib/omnia/drivers/thing".into()],
+            permissions: Permissions {
+                read_paths: Vec::new(),
+                write_paths: Vec::new(),
+                devices: devices.iter().map(|d| (*d).to_string()).collect(),
+                network: false,
+            },
+        }
+        .render_service()
+    }
+
+    #[test]
+    fn a_capability_with_no_devices_gets_a_private_dev() {
+        let unit = driver_unit(&[]);
+        assert!(unit.contains("PrivateDevices=yes"), "{unit}");
+        assert!(!unit.contains("DeviceAllow="), "{unit}");
+    }
+
+    #[test]
+    fn a_driver_names_exactly_its_own_device_and_nothing_else() {
+        // The property rung 5 rests on. A unit that names one node is a unit an
+        // operator can approve by reading it.
+        let unit = driver_unit(&["/dev/bus/usb/001/004"]);
+        let allows: Vec<&str> = unit
+            .lines()
+            .filter(|line| line.starts_with("DeviceAllow="))
+            .collect();
+        assert_eq!(allows, vec!["DeviceAllow=/dev/bus/usb/001/004 rw"]);
+        assert!(unit.contains("DevicePolicy=closed"), "{unit}");
+    }
+
+    #[test]
+    fn a_driver_does_not_get_private_devices() {
+        // The mistake that would make a generated driver fail in a way nobody
+        // could diagnose: PrivateDevices=yes mounts a /dev without the device,
+        // so the driver opens its own node and gets ENOENT rather than EPERM.
+        let unit = driver_unit(&["/dev/i2c-1"]);
+        // Directives, not prose: the unit explains in a comment why
+        // PrivateDevices=yes is wrong here, and matching the text would fail on
+        // the explanation.
+        let directives: Vec<&str> = unit
+            .lines()
+            .filter(|line| line.starts_with("PrivateDevices="))
+            .collect();
+        assert_eq!(
+            directives,
+            vec!["PrivateDevices=no"],
+            "the device would be hidden from its own driver:\n{unit}"
+        );
+    }
+
+    #[test]
+    fn everything_else_stays_locked_down_for_a_driver() {
+        // Needing a device is not a reason to relax anything else. A driver is
+        // the least trustworthy thing on the machine, not the most.
+        let unit = driver_unit(&["/dev/bus/usb/001/004"]);
+        for directive in [
+            "NoNewPrivileges=yes",
+            "CapabilityBoundingSet=",
+            "ProtectSystem=strict",
+            "ProtectKernelModules=yes",
+            "MemoryDenyWriteExecute=yes",
+            "PrivateNetwork=yes",
+            "RestrictRealtime=yes",
+        ] {
+            assert!(
+                unit.contains(directive),
+                "{directive} missing from:\n{unit}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_driver_keeps_the_syscalls_it_needs_to_talk_to_its_device() {
+        // ioctl is how usbfs and I2C are driven. It lives in @system-service,
+        // and none of the removed groups contains it -- a filter that dropped
+        // it would leave a driver that can open its device and do nothing.
+        let unit = driver_unit(&["/dev/i2c-1"]);
+        let filter = unit
+            .lines()
+            .find(|line| line.starts_with("SystemCallFilter="))
+            .expect("a filter is set");
+        assert!(filter.contains("@system-service"), "{filter}");
+        assert!(!filter.contains("~@io-event"), "{filter}");
+    }
+
+    #[test]
+    fn several_devices_each_get_their_own_line() {
+        // An I2C sensor behind a USB bridge legitimately needs both.
+        let unit = driver_unit(&["/dev/bus/usb/001/004", "/dev/i2c-1"]);
+        assert!(
+            unit.contains("DeviceAllow=/dev/bus/usb/001/004 rw"),
+            "{unit}"
+        );
+        assert!(unit.contains("DeviceAllow=/dev/i2c-1 rw"), "{unit}");
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -222,6 +490,7 @@ mod tests {
             permissions: Permissions {
                 read_paths: read.iter().map(|s| s.to_string()).collect(),
                 write_paths: write.iter().map(|s| s.to_string()).collect(),
+                devices: Vec::new(),
                 network,
             },
         }

@@ -39,6 +39,14 @@ pub struct Permissions {
     pub read_paths: Vec<String>,
     #[serde(default)]
     pub write_paths: Vec<String>,
+    /// Device nodes the part needs, as templates over its own parameters.
+    ///
+    /// Separate from `read_paths` because a device is not a file: it is
+    /// enforced by a different systemd directive, it has its own floor, and
+    /// handing one over means exclusive access to a piece of hardware rather
+    /// than to some bytes.
+    #[serde(default)]
+    pub devices: Vec<String>,
     #[serde(default)]
     pub network: bool,
 }

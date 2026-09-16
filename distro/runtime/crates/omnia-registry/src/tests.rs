@@ -243,6 +243,7 @@ fn permissions_are_carried_on_the_record() {
         Permissions {
             read_paths: vec!["~/Pictures".into()],
             write_paths: vec!["/var/backups/pictures".into()],
+            devices: Vec::new(),
             network: false,
         }
     );

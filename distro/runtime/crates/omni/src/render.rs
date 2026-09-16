@@ -40,6 +40,12 @@ pub fn reach(permissions: &Permissions) -> String {
     if !permissions.write_paths.is_empty() {
         parts.push(format!("writes {}", permissions.write_paths.join(", ")));
     }
+    // Named separately from paths because it is a different kind of access:
+    // a device node is a piece of hardware, not some bytes, and it is the
+    // line an operator approving a generated driver actually reads.
+    if !permissions.devices.is_empty() {
+        parts.push(format!("drives {}", permissions.devices.join(", ")));
+    }
     parts.push(if permissions.network {
         "network allowed".into()
     } else {
@@ -153,6 +159,7 @@ mod tests {
         let permissions = Permissions {
             read_paths: vec!["/home/a/Pictures".into(), "/var/backups/pictures".into()],
             write_paths: vec!["/var/backups/pictures".into()],
+            devices: Vec::new(),
             network: false,
         };
         let text = reach(&permissions);
@@ -160,6 +167,22 @@ mod tests {
         assert!(text.contains("/var/backups/pictures"));
         assert!(text.contains("no network"));
         assert!(!text.contains("more"), "nothing is elided: {text}");
+    }
+
+    #[test]
+    fn a_driver_says_which_hardware_it_touches() {
+        // The line an operator approves on. A device is not a path and must not
+        // be reported as one.
+        let permissions = Permissions {
+            devices: vec!["/dev/bus/usb/001/004".into()],
+            ..Permissions::default()
+        };
+        let text = reach(&permissions);
+        assert!(text.contains("drives /dev/bus/usb/001/004"), "{text}");
+        assert!(
+            !text.contains("reads"),
+            "a device is not a read path: {text}"
+        );
     }
 
     #[test]

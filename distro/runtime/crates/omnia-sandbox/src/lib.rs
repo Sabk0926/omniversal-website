@@ -18,6 +18,7 @@
 
 #![forbid(unsafe_op_in_unsafe_fn)]
 
+pub mod device;
 mod floor;
 mod unit;
 
@@ -71,6 +72,17 @@ pub fn check(permissions: &Permissions) -> Result<()> {
             });
         }
     }
+    // Devices have their own floor. A device node is not a file: it is an
+    // allow-list of buses rather than a deny-list of paths, because handing one
+    // over means exclusive access to hardware.
+    for node in &permissions.devices {
+        if let Some(reason) = device::refusal(node) {
+            return Err(SandboxError::Forbidden {
+                path: node.clone(),
+                reason,
+            });
+        }
+    }
     Ok(())
 }
 
@@ -98,6 +110,9 @@ pub fn expand(permissions: &Permissions, home: Option<&str>) -> Result<Permissio
     Ok(Permissions {
         read_paths: map(&permissions.read_paths)?,
         write_paths: map(&permissions.write_paths)?,
+        // Device nodes are absolute by construction -- the floor refuses
+        // anything not under /dev -- so there is no ~ to expand.
+        devices: permissions.devices.clone(),
         network: permissions.network,
     })
 }
@@ -110,6 +125,7 @@ mod tests {
         Permissions {
             read_paths: read.iter().map(|s| s.to_string()).collect(),
             write_paths: write.iter().map(|s| s.to_string()).collect(),
+            devices: Vec::new(),
             network,
         }
     }
