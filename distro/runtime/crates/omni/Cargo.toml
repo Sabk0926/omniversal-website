@@ -8,6 +8,7 @@ license.workspace = true
 [dependencies]
 omnia-core.workspace = true
 omnia-forge.workspace = true
+omnia-kernel.workspace = true
 omnia-model.workspace = true
 omnia-parts.workspace = true
 omnia-registry.workspace = true

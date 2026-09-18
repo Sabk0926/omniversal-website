@@ -29,6 +29,14 @@ pub enum Command {
     },
     /// The vetted parts library a plan may draw from.
     Parts,
+    /// What hardware is here and whether the kernel drives it.
+    Devices,
+    /// Climb the driver ladder for one device.
+    Fix {
+        name: String,
+        /// Say what would be tried without loading anything.
+        dry_run: bool,
+    },
     Doctor {
         offline: bool,
     },
@@ -69,12 +77,14 @@ pub struct Invocation {
     pub verbose: bool,
 }
 
-const SUBCOMMANDS: [&str; 8] = [
+const SUBCOMMANDS: [&str; 10] = [
     "ask",
     "capabilities",
     "caps",
     "show",
     "parts",
+    "devices",
+    "fix",
     "doctor",
     "help",
     "version",
@@ -87,6 +97,7 @@ where
     let mut json = false;
     let mut verbose = false;
     let mut offline = false;
+    let mut dry_run = false;
     let mut planner = PlannerChoice::Model;
     let mut install = Install::Auto;
     let mut positional: Vec<String> = Vec::new();
@@ -105,6 +116,7 @@ where
             "-h" | "--help" => return Ok(invocation(Command::Help, json, verbose)),
             "-V" | "--version" => return Ok(invocation(Command::Version, json, verbose)),
             "--offline" => offline = true,
+            "--dry-run" => dry_run = true,
             "--install" => install = Install::Always,
             "--no-install" => install = Install::Never,
             "--planner" => {
@@ -123,7 +135,7 @@ where
         }
     }
 
-    let command = command_from(positional, planner, install, offline)?;
+    let command = command_from(positional, planner, install, offline, dry_run)?;
     Ok(invocation(command, json, verbose))
 }
 
@@ -150,6 +162,7 @@ fn command_from(
     planner: PlannerChoice,
     install: Install,
     offline: bool,
+    dry_run: bool,
 ) -> Result<Command, String> {
     let Some(first) = positional.first() else {
         return Ok(Command::Inbox);
@@ -179,6 +192,14 @@ fn command_from(
             None => Err("show which capability? omni capabilities lists them".into()),
         },
         "parts" => Ok(Command::Parts),
+        "devices" => Ok(Command::Devices),
+        "fix" => match rest.first() {
+            Some(name) => Ok(Command::Fix {
+                name: name.clone(),
+                dry_run,
+            }),
+            None => Err("fix which device? omni devices lists them".into()),
+        },
         "doctor" => Ok(Command::Doctor { offline }),
         "help" => Ok(Command::Help),
         "version" => Ok(Command::Version),
@@ -241,6 +262,8 @@ USAGE
   omni capabilities             what this machine has taught itself
   omni show <name>              one capability: its plan, reach and proof
   omni parts                    the vetted parts a plan may be built from
+  omni devices                  what hardware is here, and what drives it
+  omni fix <name>               work down the driver ladder for one device
   omni doctor                   re-run every test this machine relies on
 
 OPTIONS
@@ -250,6 +273,7 @@ OPTIONS
   --install              install the built package even if that needs root
   --no-install           build the package but leave it uninstalled
   --offline              doctor only: skip anything that touches the model
+  --dry-run              fix only: say what would be tried, change nothing
   --json                 machine-readable output
   -v, --verbose          debug logging, including model cache statistics
   -h, --help             this
@@ -259,6 +283,7 @@ EXIT CODES
   0  it worked            5  the model backend is not answering
   1  I/O failure          6  a test did not pass, so nothing was kept
   2  bad usage or config   7  the sandbox refused the access a plan needed
+  3  a fix needs a decision
   4  no model at that tier 8  no plan survived validation; nothing was built
 ";
 

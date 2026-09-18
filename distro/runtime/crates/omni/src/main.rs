@@ -24,6 +24,7 @@
 mod args;
 mod ask;
 mod context;
+mod devices;
 mod doctor;
 mod list;
 mod render;
@@ -82,6 +83,8 @@ fn dispatch(invocation: Invocation) -> omnia_core::Result<i32> {
         Command::Capabilities => list::capabilities(&context, json),
         Command::Show { ref name } => list::show(name, &context, json),
         Command::Parts => list::parts(&context, json),
+        Command::Devices => devices::survey(&context, json),
+        Command::Fix { ref name, dry_run } => devices::fix(name, &context, json, dry_run),
         Command::Doctor { offline } => doctor::run(&context, offline, json),
         Command::Ask(ref ask) => ask::run(ask, &mut context, json),
         // Both are handled in `run`, before any configuration is loaded.

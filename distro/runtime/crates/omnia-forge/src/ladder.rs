@@ -658,6 +658,11 @@ fn declaration_name(device: &Device) -> String {
     format!("driver-{}", slug.trim_matches('-'))
 }
 
+#[path = "ladder/system.rs"]
+pub mod system;
+
+pub use self::system::{firmware_requests, RealSystem};
+
 #[cfg(test)]
 #[path = "ladder/ladder_tests.rs"]
 mod ladder_tests;
