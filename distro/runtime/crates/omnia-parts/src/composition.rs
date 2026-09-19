@@ -108,6 +108,10 @@ impl Catalog {
                 permissions: Permissions {
                     read_paths: expand(&part.permissions.read_paths),
                     write_paths: expand(&part.permissions.write_paths),
+                    // Device templates substitute the same way paths do, so a
+                    // part says devices = ["{node}"] and the reach still falls
+                    // out of the manifest rather than being declared.
+                    devices: expand(&part.permissions.devices),
                     network: part.permissions.network,
                 },
                 args: effective,
@@ -131,10 +135,16 @@ pub fn total_permissions(steps: &[ResolvedStep]) -> Permissions {
                 total.write_paths.push(path.clone());
             }
         }
+        for device in &step.permissions.devices {
+            if !total.devices.contains(device) {
+                total.devices.push(device.clone());
+            }
+        }
         total.network |= step.permissions.network;
     }
     total.read_paths.sort();
     total.write_paths.sort();
+    total.devices.sort();
     total
 }
 

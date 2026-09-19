@@ -181,24 +181,128 @@ pub struct Declaration {
     pub device_id: Option<String>,
     /// What the retained test will check.
     pub proves: String,
+    pub fix: Fix,
+}
+
+/// The shape of the fix, which decides what has to be installed to keep it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Fix {
+    /// The module exists and just was not loaded. One drop-in.
+    LoadModule,
+    /// An existing driver had to be told this device's ID. Needs both a rule to
+    /// notice the device and a unit to do the telling, because `new_id` does
+    /// not survive a reboot or a re-plug.
+    BindById {
+        bus: String,
+        vendor: u32,
+        product: u32,
+    },
 }
 
 impl Declaration {
-    /// `/usr/lib/modules-load.d/<name>.conf`, which systemd-modules-load reads
-    /// at boot. A drop-in rather than an edit to an existing file: it can be
-    /// removed by removing the package, which is the whole reason generated
-    /// things are packages.
-    pub fn modules_load_conf(&self) -> (String, String) {
-        (
-            format!("/usr/lib/modules-load.d/{}.conf", self.name),
-            format!(
-                "# Written by Omnia: {} needs this module and does not load it \
-                 automatically.\n{}\n",
-                self.device_id
-                    .as_deref()
-                    .unwrap_or("a device on this machine"),
-                self.module
-            ),
+    /// The files the package installs.
+    ///
+    /// Drop-ins under `/usr/lib`, never edits to files someone else owns: the
+    /// whole point of shipping generated things as packages is that removing
+    /// the package removes the change, and an edit to `/etc/modules` could not
+    /// be undone that cleanly.
+    ///
+    /// Nothing here runs a shell. The unit's `ExecStart` is an argv vector and
+    /// the value it writes arrives on standard input, so a device ID is data
+    /// and never a fragment of a command line.
+    pub fn files(&self) -> Vec<(String, String)> {
+        match &self.fix {
+            Fix::LoadModule => vec![(
+                format!("/usr/lib/modules-load.d/{}.conf", self.name),
+                format!(
+                    "# Written by Omnia: {} needs this module and does not load it \
+                     automatically.\n{}\n",
+                    self.device_id
+                        .as_deref()
+                        .unwrap_or("a device on this machine"),
+                    self.module
+                ),
+            )],
+            Fix::BindById {
+                bus,
+                vendor,
+                product,
+            } => {
+                let unit = format!("omnia-bind-{}.service", self.slug());
+                vec![
+                    (
+                        format!("/usr/lib/udev/rules.d/70-omnia-{}.rules", self.slug()),
+                        self.udev_rule(bus, *vendor, *product, &unit),
+                    ),
+                    (
+                        format!("/usr/lib/systemd/system/{unit}"),
+                        self.bind_unit(bus, *vendor, *product),
+                    ),
+                ]
+            }
+        }
+    }
+
+    /// The device part of the name, without the `driver-` prefix the package
+    /// carries. `driver-0bda-8155` becomes `0bda-8155`, so the unit reads
+    /// `omnia-bind-0bda-8155.service` rather than stuttering.
+    fn slug(&self) -> &str {
+        self.name.strip_prefix("driver-").unwrap_or(&self.name)
+    }
+
+    /// Notice the device and ask systemd to run the unit.
+    ///
+    /// `ENV{SYSTEMD_WANTS}` rather than `RUN+=`: udev's RUN runs a short-lived
+    /// process inside the udev event, where a blocking write to sysfs can stall
+    /// the whole event queue. Handing it to systemd also means the work is a
+    /// unit with a name, a log and a status, rather than something invisible.
+    fn udev_rule(&self, bus: &str, vendor: u32, product: u32, unit: &str) -> String {
+        let attributes = match bus {
+            "pci" => {
+                format!("ATTR{{vendor}}==\"0x{vendor:04x}\", ATTR{{device}}==\"0x{product:04x}\"")
+            }
+            // usb and everything else that names its ids this way
+            _ => {
+                format!("ATTR{{idVendor}}==\"{vendor:04x}\", ATTR{{idProduct}}==\"{product:04x}\"")
+            }
+        };
+        format!(
+            "# Written by Omnia. {} drives devices like this one but was not told\n\
+             # about {:04x}:{:04x}, so this hands it the ID when the device appears.\n\
+             ACTION==\"add\", SUBSYSTEM==\"{bus}\", {attributes}, \
+             TAG+=\"systemd\", ENV{{SYSTEMD_WANTS}}+=\"{unit}\"\n",
+            self.module, vendor, product
+        )
+    }
+
+    fn bind_unit(&self, bus: &str, vendor: u32, product: u32) -> String {
+        let new_id = format!("/sys/bus/{bus}/drivers/{}/new_id", self.module);
+        format!(
+            "[Unit]\n\
+             Description=Tell {module} about {vendor:04x}:{product:04x}\n\
+             Documentation=man:omni(1)\n\
+             \n\
+             [Service]\n\
+             Type=oneshot\n\
+             RemainAfterExit=yes\n\
+             # new_id only exists once the driver is loaded, and on a hot plug\n\
+             # nothing else will have loaded it. Loading it here rather than\n\
+             # testing for the path: a ConditionPathExists would skip this unit\n\
+             # silently in exactly the case it is needed.\n\
+             ExecStartPre=/usr/sbin/modprobe {module}\n\
+             # argv only, no shell: the ID is data on stdin, never a command line.\n\
+             StandardInputText={vendor:04x} {product:04x}\n\
+             ExecStart=/usr/bin/tee {new_id}\n\
+             StandardOutput=null\n\
+             \n\
+             # Re-running this is normal: the unit fires again on every re-plug,\n\
+             # and a duplicate new_id write returns EEXIST. That is the fix\n\
+             # already being in place, not a failure.\n\
+             SuccessExitStatus=0 1\n",
+            module = self.module,
+            vendor = vendor,
+            product = product,
+            new_id = new_id,
         )
     }
 }
@@ -225,6 +329,11 @@ pub trait System {
 
     /// Ask the kernel to re-probe, after supplying firmware or a new ID.
     fn reprobe(&self, syspath: &Path) -> Result<(), String>;
+
+    /// Tell a loaded driver about a device ID it does not know, by writing to
+    /// its `new_id`. The driver then tries to bind; whether it succeeds is a
+    /// separate question, which is why the caller checks.
+    fn bind_by_id(&self, bus: &str, driver: &str, vendor: u32, product: u32) -> Result<(), String>;
 }
 
 pub struct Ladder<'a> {
@@ -285,6 +394,7 @@ impl Ladder<'_> {
                     "the module loads and {} binds to it",
                     device.id_pair().unwrap_or_else(|| device.name.clone())
                 ),
+                fix: Fix::LoadModule,
             });
         }
         climb.attempts.push(Attempt {
@@ -309,13 +419,33 @@ impl Ladder<'_> {
             return climb;
         }
 
-        // ---- rungs 3 and up ----
+        // ---- rung 3: the driver is there and does not know this device ----
+        if Rung::Config <= self.ceiling {
+            let step = self.rung_three(device, alias);
+            let bound = matches!(step, Step::Bound { .. });
+            if let Step::Bound { driver } = &step {
+                climb.resolved = Some(driver.clone());
+                climb.declaration = self.id_declaration(device, alias, driver);
+            }
+            climb.attempts.push(Attempt {
+                rung: Rung::Config,
+                step,
+            });
+            if bound {
+                return climb;
+            }
+        }
+
+        // ---- rungs 4 and up ----
         for rung in [
             Rung::Config,
             Rung::Source,
             Rung::Userspace,
             Rung::KernelModule,
         ] {
+            if climb.attempts.iter().any(|a| a.rung == rung) {
+                continue;
+            }
             if rung > self.ceiling {
                 climb.attempts.push(Attempt {
                     rung,
@@ -334,6 +464,91 @@ impl Ladder<'_> {
         }
 
         climb
+    }
+
+    /// An existing driver handles devices like this one and has not been told
+    /// this one's ID.
+    ///
+    /// # Where the autonomy line sits
+    ///
+    /// Forcing a binding is a bigger step than loading a module: the wrong
+    /// driver writing to the wrong registers can wedge the hardware, and unlike
+    /// `modprobe` there is no "it declined to claim it" outcome to fall back on.
+    /// So the two kinds of candidate are treated differently:
+    ///
+    /// - **Same manufacturer.** A newer revision or a rebadge of a chip the
+    ///   driver already handles. This is what `new_id` is overwhelmingly used
+    ///   for, and it is acted on.
+    /// - **A different manufacturer's driver for this class.** Plausible, and
+    ///   still a guess about someone else's hardware. It is written up and
+    ///   handed over rather than tried.
+    fn rung_three(&self, device: &Device, alias: &omnia_kernel::Modalias) -> Step {
+        let Some(bus) = device.subsystem.clone() else {
+            return Step::NotApplicable("the device is on no bus this can write to".into());
+        };
+        let Some((vendor, product)) = split_id_pair(alias) else {
+            return Step::NotApplicable("this bus does not identify devices by number".into());
+        };
+
+        let mut candidates = self.index.id_candidates(alias);
+        if candidates.is_empty() {
+            return Step::NotApplicable(
+                "no driver in this kernel wants a device like this one".into(),
+            );
+        }
+        // Strongest evidence first.
+        candidates.sort_by_key(|candidate| !candidate.same_vendor);
+
+        let mut failures = Vec::new();
+        for candidate in &candidates {
+            if !candidate.same_vendor {
+                return Step::NeedsApproval(format!(
+                    "{}. Binding it would be a guess about another manufacturer's hardware",
+                    candidate.describe()
+                ));
+            }
+            // new_id lives under the driver's directory, which only exists once
+            // the driver is loaded.
+            if let Err(e) = self.system.load_module(&candidate.module) {
+                failures.push(format!("{} would not load: {e}", candidate.module));
+                continue;
+            }
+            match self
+                .system
+                .bind_by_id(&bus, &candidate.module, vendor, product)
+            {
+                Ok(()) => match self.system.bound_driver(&device.syspath) {
+                    Some(driver) => return Step::Bound { driver },
+                    None => failures.push(format!(
+                        "{} took the ID and still did not claim the device",
+                        candidate.module
+                    )),
+                },
+                Err(e) => failures.push(format!("{} refused the ID: {e}", candidate.module)),
+            }
+        }
+        Step::Failed(failures.join("; "))
+    }
+
+    fn id_declaration(
+        &self,
+        device: &Device,
+        alias: &omnia_kernel::Modalias,
+        driver: &str,
+    ) -> Option<Declaration> {
+        let bus = device.subsystem.clone()?;
+        let (vendor, product) = split_id_pair(alias)?;
+        Some(Declaration {
+            name: declaration_name(device),
+            module: driver.to_string(),
+            device_id: device.id_pair(),
+            proves: format!("{driver} is told about {vendor:04x}:{product:04x} and binds to it"),
+            fix: Fix::BindById {
+                bus,
+                vendor,
+                product,
+            },
+        })
     }
 
     /// A module claims this device and is not loaded. Load it, then check the
@@ -410,6 +625,16 @@ impl Ladder<'_> {
     }
 }
 
+/// The numeric identity a `new_id` write needs.
+fn split_id_pair(alias: &omnia_kernel::Modalias) -> Option<(u32, u32)> {
+    let pair = alias.id_pair()?;
+    let (vendor, product) = pair.split_once(':')?;
+    Some((
+        u32::from_str_radix(vendor, 16).ok()?,
+        u32::from_str_radix(product, 16).ok()?,
+    ))
+}
+
 /// A stable package name for the declaration.
 ///
 /// Derived from the device identity rather than from the path: the same USB
@@ -432,6 +657,11 @@ fn declaration_name(device: &Device) -> String {
         .collect();
     format!("driver-{}", slug.trim_matches('-'))
 }
+
+#[path = "ladder/system.rs"]
+pub mod system;
+
+pub use self::system::{firmware_requests, RealSystem};
 
 #[cfg(test)]
 #[path = "ladder/ladder_tests.rs"]

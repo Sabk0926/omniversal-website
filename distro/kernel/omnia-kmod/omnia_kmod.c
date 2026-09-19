@@ -109,8 +109,19 @@ static void omnia_emit(struct omnia_event *ev)
 		/* Ring full: drop the OLDEST record. During an incident the
 		 * newest events are the ones that explain it; a reader that
 		 * fell behind wants the tail, not a stale head. The gap is
-		 * visible either way because seq numbers skip. */
-		kfifo_out(&omnia->fifo, &discard, sizeof(discard));
+		 * visible either way because seq numbers skip.
+		 *
+		 * kfifo_out is __must_check and the result is checked rather
+		 * than cast away: a short dequeue would mean the ring is not
+		 * in the state this path assumes, and the kfifo_in below would
+		 * paper over it by failing in a way attributed to the new
+		 * event instead of to the eviction. */
+		if (kfifo_out(&omnia->fifo, &discard, sizeof(discard)) !=
+		    sizeof(discard)) {
+			spin_unlock_irqrestore(&omnia->fifo_lock, flags);
+			atomic64_inc(&omnia->dropped);
+			return;
+		}
 		atomic64_inc(&omnia->dropped);
 	}
 	copied = kfifo_in(&omnia->fifo, ev, sizeof(*ev));
@@ -125,7 +136,12 @@ static void omnia_emit(struct omnia_event *ev)
 }
 
 /* Exported so sibling in-tree helpers (and the guard's ring drain) can post
- * events without going through userspace. */
+ * events without going through userspace.
+ *
+ * Declared in omnia_abi.h as well as defined here: an exported symbol with no
+ * visible prototype lets a caller in another translation unit invent its own
+ * signature, and the mismatch is only discovered at runtime as a corrupted
+ * argument. -Wmissing-prototypes catches exactly this. */
 void omnia_post_event(u32 type, u32 severity, u64 arg0, u64 arg1,
 		      const char *payload)
 {
