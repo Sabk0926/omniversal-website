@@ -113,4 +113,16 @@ struct omnia_stats {
 #define OMNIA_IOC_CLAIM		_IO(OMNIA_IOC_MAGIC,  0x06)
 #define OMNIA_IOC_HEARTBEAT	_IO(OMNIA_IOC_MAGIC,  0x07)
 
+/* ---- in-kernel helpers -------------------------------------------------- */
+#ifdef __KERNEL__
+/*
+ * Post an event from inside the kernel, bypassing the ioctl path. Exported by
+ * omnia_kmod for sibling helpers. Declared here rather than in a private
+ * header so that any in-tree caller and the definition are checked against the
+ * same prototype.
+ */
+void omnia_post_event(__u32 type, __u32 severity, __u64 arg0, __u64 arg1,
+		      const char *payload);
+#endif
+
 #endif /* _OMNIA_ABI_H */

@@ -119,8 +119,17 @@ int omnia_trace_oom(struct trace_event_raw_mark_victim *ctx)
 	return 0;
 }
 
+/*
+ * The context struct is named after the tracepoint's *class*, not the
+ * tracepoint. block_rq_error is a DEFINE_EVENT on the block_rq_completion
+ * class, so the kernel generates trace_event_raw_block_rq_completion and there
+ * is no trace_event_raw_block_rq_error anywhere in BTF.
+ *
+ * Writing the name that looks right compiles only until somebody builds this
+ * against a real vmlinux.h, which is exactly where it was caught.
+ */
 SEC("tracepoint/block/block_rq_error")
-int omnia_trace_block_error(struct trace_event_raw_block_rq_error *ctx)
+int omnia_trace_block_error(struct trace_event_raw_block_rq_completion *ctx)
 {
 	struct omnia_sys_event *e;
 
